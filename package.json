@@ -1,0 +1,9 @@
+{
+  "name": "giyuchat-deploy",
+  "version": "1.0.0",
+  "description": "Root deployment package",
+  "scripts": {
+    "build": "npm install --prefix client && npm run build --prefix client && npm install --prefix server",
+    "start": "npm start --prefix server"
+  }
+}
