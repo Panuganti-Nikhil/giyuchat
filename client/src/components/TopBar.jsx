@@ -30,7 +30,7 @@ export default function TopBar({ room, members, onToggleRightPanel, showRightPan
       <div className="flex items-center gap-3">
         <button
           onClick={onToggleSidebar}
-          className={`p-2 rounded-lg lg:hidden ${isDark ? 'hover:bg-white/10 text-white' : 'hover:bg-black/10 text-slate-700'}`}
+          className={`p-2  lg:hidden ${isDark ? 'hover:bg-white/10 text-white' : 'hover:bg-black/10 text-slate-700'}`}
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -38,14 +38,14 @@ export default function TopBar({ room, members, onToggleRightPanel, showRightPan
         <div>
           <div className="flex items-center gap-2">
             <h2 className={`font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{room.name}</h2>
-            <button onClick={copyCode} className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-mono
+            <button onClick={copyCode} className={`flex items-center gap-1 px-2 py-0.5  text-xs font-mono
               ${isDark ? 'bg-white/5 text-slate-400 hover:bg-white/10' : 'bg-black/5 text-slate-500 hover:bg-black/10'}`}>
               {room.code}
               {copied ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3" />}
             </button>
           </div>
           <div className={`flex items-center gap-1.5 text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+            <span className="w-1.5 h-1.5  bg-green-400 animate-pulse" />
             {onlineCount} online · {members.length} members
           </div>
         </div>
@@ -55,7 +55,7 @@ export default function TopBar({ room, members, onToggleRightPanel, showRightPan
       <div className="flex items-center gap-1">
         <button
           onClick={() => onToggleRightPanel('members')}
-          className={`p-2 rounded-lg transition-colors ${showRightPanel === 'members'
+          className={`p-2  transition-colors ${showRightPanel === 'members'
             ? 'bg-violet-500/20 text-violet-400'
             : isDark ? 'hover:bg-white/10 text-slate-400' : 'hover:bg-black/10 text-slate-500'
           }`}
@@ -65,7 +65,7 @@ export default function TopBar({ room, members, onToggleRightPanel, showRightPan
         </button>
         <button
           onClick={() => onToggleRightPanel('settings')}
-          className={`p-2 rounded-lg transition-colors ${showRightPanel === 'settings'
+          className={`p-2  transition-colors ${showRightPanel === 'settings'
             ? 'bg-violet-500/20 text-violet-400'
             : isDark ? 'hover:bg-white/10 text-slate-400' : 'hover:bg-black/10 text-slate-500'
           }`}

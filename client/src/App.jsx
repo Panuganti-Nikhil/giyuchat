@@ -438,7 +438,7 @@ export default function App() {
       {/* Toast Notification */}
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] toast">
-          <div className={`px-5 py-3 rounded-xl shadow-2xl text-sm font-medium
+          <div className={`px-5 py-3   text-sm font-medium
             ${toast.type === 'error'
               ? 'bg-red-500/20 border border-red-500/30 text-red-300'
               : toast.type === 'success'

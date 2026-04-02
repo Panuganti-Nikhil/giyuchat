@@ -5,116 +5,177 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow: hidden;
   height: 100vh;
 }
 
 #root { height: 100vh; }
 
-/* ── Dark gradient background ── */
+/* ── Premium High-Contrast Grid Background ── */
 .bg-app-dark {
-  background: linear-gradient(135deg, #0a0a14 0%, #12091f 30%, #0d1525 60%, #080c18 100%);
+  background-color: #030303;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 .bg-app-light {
-  background: linear-gradient(135deg, #f0f0ff 0%, #e8e0f0 30%, #e0ecf5 60%, #f5f5ff 100%);
+  background-color: #ffffff;
+  background-image: 
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
-/* ── Glass effects ── */
+/* ── Flat, Sharp Panels ── */
 .glass {
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 10, 10, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0 !important;
 }
 .glass-light {
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 0 !important;
 }
 .glass-hover:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
 }
+.light .glass-hover:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
 .glass-active {
-  background: rgba(139, 92, 246, 0.15);
-  border: 1px solid rgba(139, 92, 246, 0.3);
-}
-
-/* ── Scrollbar ── */
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.2); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.4); }
-
-/* ── Custom classes ── */
-.gradient-text {
-  background: linear-gradient(135deg, #a78bfa 0%, #38bdf8 50%, #818cf8 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.gradient-btn {
-  background: linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #3b82f6 100%);
-  transition: all 0.3s ease;
-}
-.gradient-btn:hover {
-  background: linear-gradient(135deg, #6d28d9 0%, #4f46e5 50%, #2563eb 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 25px rgba(124, 58, 237, 0.3);
-}
-
-.message-sent {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.9), rgba(99, 102, 241, 0.9));
-  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.15);
-}
-.message-received {
   background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+.light .glass-active {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.2);
 }
 
-/* Light mode message styles */
+/* ── Sharp Scrollbar ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 0; border: 1px solid transparent; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+.light ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.1); }
+.light ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
+
+/* ── Custom High-End Classes ── */
+.premium-text {
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.light .premium-text {
+  color: #000;
+}
+
+.premium-btn {
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #ffffff;
+  transition: all 0.2s ease;
+  border-radius: 0 !important;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.premium-btn:hover {
+  background: transparent;
+  color: #ffffff;
+}
+
+.light .premium-btn {
+  background: #000000;
+  color: #ffffff;
+  border-color: #000000;
+}
+.light .premium-btn:hover {
+  background: transparent;
+  color: #000000;
+}
+
+/* ── Minimalist Sharp Messages ── */
+.message-sent {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-radius: 0 !important;
+  border: 1px solid #ffffff !important;
+}
 .light .message-sent {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.85), rgba(99, 102, 241, 0.85));
-  color: white;
+  background: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
+}
+
+.message-received {
+  background: transparent !important;
+  border-radius: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 }
 .light .message-received {
-  background: rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+}
+
+/* ── Input Areas ── */
+input {
+  border-radius: 0 !important;
+}
+button {
+  border-radius: 0 !important;
 }
 
 /* ── Typing dots animation ── */
 .typing-dot {
-  animation: typingBounce 1.4s ease-in-out infinite;
+  animation: typingPulse 1.4s ease-in-out infinite;
+  border-radius: 0 !important;
 }
 .typing-dot:nth-child(2) { animation-delay: 0.2s; }
 .typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
-@keyframes typingBounce {
-  0%, 60%, 100% { transform: translateY(0); }
-  30% { transform: translateY(-6px); }
+@keyframes typingPulse {
+  0%, 60%, 100% { opacity: 0.3; transform: scale(1); }
+  30% { opacity: 1; transform: scale(1.2); }
 }
 
-/* ── Glow animation for orbs ── */
+/* ── Sharp Orbs (Square elements instead of rounded glows) ── */
 @keyframes glow {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.1); }
+  0%, 100% { opacity: 0.03; }
+  50% { opacity: 0.06; }
 }
-.animate-glow { animation: glow 4s ease-in-out infinite; }
-.animate-glow-delayed { animation: glow 4s ease-in-out infinite 2s; }
+.animate-glow { animation: glow 4s ease-in-out infinite; border-radius: 0; }
+.animate-glow-delayed { animation: glow 4s ease-in-out infinite 2s; border-radius: 0; }
 
 /* ── Emoji picker override ── */
 .EmojiPickerReact {
-  --epr-bg-color: rgba(15, 15, 25, 0.95) !important;
-  --epr-category-label-bg-color: rgba(15, 15, 25, 0.95) !important;
-  --epr-hover-bg-color: rgba(139, 92, 246, 0.2) !important;
+  --epr-bg-color: #0a0a0a !important;
+  --epr-category-label-bg-color: #0a0a0a !important;
+  --epr-hover-bg-color: rgba(255, 255, 255, 0.1) !important;
   --epr-search-input-bg-color: rgba(255, 255, 255, 0.05) !important;
-  --epr-text-color: #e2e8f0 !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  --epr-text-color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0 !important;
 }
 
-/* ── Toast notification ── */
+.light .EmojiPickerReact {
+  --epr-bg-color: #ffffff !important;
+  --epr-category-label-bg-color: #ffffff !important;
+  --epr-hover-bg-color: rgba(0, 0, 0, 0.05) !important;
+  --epr-search-input-bg-color: rgba(0, 0, 0, 0.03) !important;
+  --epr-text-color: #000000 !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ── Sharp Toast notification ── */
+.toast > div {
+  border-radius: 0 !important;
+}
 .toast {
   animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.7s forwards;
 }

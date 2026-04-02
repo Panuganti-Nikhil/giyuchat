@@ -43,7 +43,7 @@ export default function Sidebar({ rooms, activeRoom, username, onSelectRoom, onC
         {/* Header */}
         <div className={`px-5 py-4 border-b ${isDark ? 'border-white/5' : 'border-black/5'}`}>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg gradient-btn flex items-center justify-center">
+            <div className="w-8 h-8  premium-btn flex items-center justify-center">
               <MessageCircle className="w-4 h-4 text-white" />
             </div>
             <div>
@@ -67,7 +67,7 @@ export default function Sidebar({ rooms, activeRoom, username, onSelectRoom, onC
             <div
               key={room.code}
               onClick={() => { onSelectRoom(room.code); onClose?.(); }}
-              className={`group px-3 py-2.5 rounded-xl cursor-pointer transition-all duration-200
+              className={`group px-3 py-2.5  cursor-pointer transition-all duration-200
                 ${activeRoom === room.code
                   ? 'glass-active'
                   : isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'
@@ -82,14 +82,14 @@ export default function Sidebar({ rooms, activeRoom, username, onSelectRoom, onC
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={e => { e.stopPropagation(); copyCode(room.code); }}
-                    className={`p-1 rounded-md ${isDark ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
+                    className={`p-1  ${isDark ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}
                     title="Copy room code"
                   >
                     {copied === room.code ? <Check className="w-3 h-3 text-green-400" /> : <Copy className="w-3 h-3 text-slate-400" />}
                   </button>
                   <button
                     onClick={e => { e.stopPropagation(); onLeaveRoom(room.code); }}
-                    className="p-1 rounded-md hover:bg-red-500/20"
+                    className="p-1  hover:bg-red-500/20"
                     title="Leave room"
                   >
                     <LogOut className="w-3 h-3 text-red-400" />
@@ -112,14 +112,14 @@ export default function Sidebar({ rooms, activeRoom, username, onSelectRoom, onC
                 onKeyDown={e => e.key === 'Enter' && handleSubmit()}
                 placeholder={mode === 'create' ? 'Room name...' : 'Room code...'}
                 maxLength={mode === 'create' ? 50 : 6}
-                className={`flex-1 px-3 py-2 rounded-lg text-sm outline-none
+                className={`flex-1 px-3 py-2  text-sm outline-none
                   ${isDark
                     ? 'bg-white/5 border border-white/10 text-white placeholder-slate-500'
                     : 'bg-black/5 border border-black/10 text-slate-900 placeholder-slate-400'
                   }`}
               />
-              <button onClick={handleSubmit} className="px-3 py-2 rounded-lg gradient-btn text-white text-sm font-medium">Go</button>
-              <button onClick={() => { setMode(null); setInput(''); }} className={`px-2 py-2 rounded-lg text-sm ${isDark ? 'text-slate-400 hover:bg-white/5' : 'text-slate-500 hover:bg-black/5'}`}>✕</button>
+              <button onClick={handleSubmit} className="px-3 py-2  premium-btn text-white text-sm font-medium">Go</button>
+              <button onClick={() => { setMode(null); setInput(''); }} className={`px-2 py-2  text-sm ${isDark ? 'text-slate-400 hover:bg-white/5' : 'text-slate-500 hover:bg-black/5'}`}>✕</button>
             </div>
           )}
 
@@ -128,7 +128,7 @@ export default function Sidebar({ rooms, activeRoom, username, onSelectRoom, onC
               <button
                 id="sidebar-create-btn"
                 onClick={() => setMode('create')}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-1.5 transition-all
+                className={`flex-1 py-2.5  text-sm font-medium flex items-center justify-center gap-1.5 transition-all
                   ${isDark ? 'bg-white/5 text-white hover:bg-white/10' : 'bg-black/5 text-slate-700 hover:bg-black/10'}`}
               >
                 <Plus className="w-4 h-4" /> Create
@@ -136,7 +136,7 @@ export default function Sidebar({ rooms, activeRoom, username, onSelectRoom, onC
               <button
                 id="sidebar-join-btn"
                 onClick={() => setMode('join')}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-1.5 transition-all
+                className={`flex-1 py-2.5  text-sm font-medium flex items-center justify-center gap-1.5 transition-all
                   ${isDark ? 'bg-white/5 text-white hover:bg-white/10' : 'bg-black/5 text-slate-700 hover:bg-black/10'}`}
               >
                 <LogIn className="w-4 h-4" /> Join

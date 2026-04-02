@@ -28,9 +28,9 @@ function StatCard({ icon: Icon, title, value, color, isDark }) {
   const c = colorMap[color] || colorMap.violet;
 
   return (
-    <div className={`rounded-2xl p-5 border bg-gradient-to-br ${c} animate-fade-in`}>
+    <div className={` p-5 border bg-gradient-to-br ${c} animate-fade-in`}>
       <div className="flex items-center gap-3">
-        <div className={`w-10 h-10 rounded-xl bg-${color}-500/20 flex items-center justify-center`}>
+        <div className={`w-10 h-10  bg-${color}-500/20 flex items-center justify-center`}>
           <Icon className={`w-5 h-5 ${c.split(' ').pop()}`} />
         </div>
         <div>
@@ -82,7 +82,7 @@ export default function Dashboard({ stats }) {
             {stats.leaderboard.map((entry, i) => (
               <div
                 key={entry.username}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all animate-fade-in
+                className={`flex items-center gap-3 px-4 py-3  transition-all animate-fade-in
                   ${i === 0 ? 'bg-gradient-to-r from-amber-500/10 to-transparent border border-amber-500/20'
                   : i === 1 ? 'bg-gradient-to-r from-slate-400/10 to-transparent border border-slate-400/10'
                   : i === 2 ? 'bg-gradient-to-r from-orange-600/10 to-transparent border border-orange-600/10'
@@ -94,7 +94,7 @@ export default function Dashboard({ stats }) {
                   ${i === 0 ? 'text-amber-400' : i === 1 ? 'text-slate-400' : i === 2 ? 'text-orange-500' : isDark ? 'text-slate-600' : 'text-slate-400'}`}>
                   {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
                 </span>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold
+                <div className={`w-8 h-8  flex items-center justify-center text-xs font-bold
                   ${entry.username === stats.username ? 'bg-violet-500/30 text-violet-300' : isDark ? 'bg-white/5 text-slate-400' : 'bg-black/5 text-slate-500'}`}>
                   {entry.username[0].toUpperCase()}
                 </div>

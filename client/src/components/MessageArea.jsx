@@ -29,11 +29,11 @@ function renderMessageText(text, isDark, members) {
       if (match[1]) tokens.push(<strong key={`b${match.index}`} className="font-bold">{match[2]}</strong>);
       else if (match[3]) tokens.push(<em key={`i${match.index}`} className="italic">{match[4]}</em>);
       else if (match[5]) tokens.push(<em key={`u${match.index}`} className="italic">{match[6]}</em>);
-      else if (match[7]) tokens.push(<code key={`c${match.index}`} className={`px-1.5 py-0.5 rounded text-xs font-mono ${isDark ? 'bg-white/10 text-emerald-400' : 'bg-black/10 text-emerald-600'}`}>{match[8]}</code>);
+      else if (match[7]) tokens.push(<code key={`c${match.index}`} className={`px-1.5 py-0.5  text-xs font-mono ${isDark ? 'bg-white/10 text-emerald-400' : 'bg-black/10 text-emerald-600'}`}>{match[8]}</code>);
       else if (match[9]) {
         const mentionName = match[10];
         const isMember = memberNames.some(n => n.toLowerCase() === mentionName.toLowerCase());
-        tokens.push(<span key={`m${match.index}`} className={`font-semibold ${isMember ? 'text-cyan-400 bg-cyan-400/10 px-1 rounded' : isDark ? 'text-violet-400' : 'text-violet-600'}`}>@{mentionName}</span>);
+        tokens.push(<span key={`m${match.index}`} className={`font-semibold ${isMember ? 'text-cyan-400 bg-cyan-400/10 px-1 ' : isDark ? 'text-violet-400' : 'text-violet-600'}`}>@{mentionName}</span>);
       }
       lastIndex = match.index + match[0].length;
     }
@@ -50,7 +50,7 @@ function renderMessageText(text, isDark, members) {
     for (const img of imageMatch) {
       const idx = remaining.indexOf(img, lastIdx);
       if (idx > lastIdx) parts.push(<span key={key++}>{processInline(remaining.slice(lastIdx, idx))}</span>);
-      parts.push(<img key={key++} src={img} alt="shared" loading="lazy" className="max-w-[250px] max-h-[200px] rounded-lg mt-1 object-cover cursor-pointer hover:opacity-80 transition-opacity" onClick={() => window.open(img, '_blank')} onError={(e) => { e.target.style.display = 'none'; }} />);
+      parts.push(<img key={key++} src={img} alt="shared" loading="lazy" className="max-w-[250px] max-h-[200px]  mt-1 object-cover cursor-pointer hover:opacity-80 transition-opacity" onClick={() => window.open(img, '_blank')} onError={(e) => { e.target.style.display = 'none'; }} />);
       lastIdx = idx + img.length;
     }
     if (lastIdx < remaining.length) parts.push(<span key={lastIdx}>{processInline(remaining.slice(lastIdx))}</span>);
@@ -220,7 +220,7 @@ export default function MessageArea({
     <div className="flex-1 flex flex-col min-h-0 relative">
       {/* Pinned Message Banner */}
       {pinnedMessage && (
-        <div className={`px-4 py-2 border-b flex items-center justify-between gap-3 shadow-sm z-10 
+        <div className={`px-4 py-2 border-b flex items-center justify-between gap-3  z-10 
           ${isDark ? 'bg-amber-500/10 border-amber-500/20' : 'bg-amber-50 border-amber-200'}`}>
           <div className="flex items-center gap-2 overflow-hidden flex-1 cursor-pointer" 
                onClick={() => {
@@ -235,7 +235,7 @@ export default function MessageArea({
             </div>
           </div>
           {canManage && (
-            <button onClick={() => onPinMessage?.(pinnedMessage.id)} className={`p-1 rounded opacity-70 hover:opacity-100 ${isDark ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}>
+            <button onClick={() => onPinMessage?.(pinnedMessage.id)} className={`p-1  opacity-70 hover:opacity-100 ${isDark ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}>
               <X className="w-4 h-4" />
             </button>
           )}
@@ -257,7 +257,7 @@ export default function MessageArea({
           if (msg.type === 'system') {
             return (
               <div key={msg.id} id={`msg-${msg.id}`} className="flex justify-center py-1 animate-fade-in">
-                <span className={`text-xs px-3 py-1 rounded-full ${isDark ? 'bg-white/5 text-slate-500' : 'bg-black/5 text-slate-400'}`}>
+                <span className={`text-xs px-3 py-1  ${isDark ? 'bg-white/5 text-slate-500' : 'bg-black/5 text-slate-400'}`}>
                   {msg.text}
                 </span>
               </div>
@@ -274,7 +274,7 @@ export default function MessageArea({
           return (
             <div key={msg.id} id={`msg-${msg.id}`} className={`flex items-end gap-2 animate-fade-in ${isMine ? 'justify-end' : 'justify-start'}`}>
               {!isMine && (
-                <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold
+                <div className={`w-7 h-7  flex-shrink-0 flex items-center justify-center text-xs font-bold
                   ${showAvatar ? 'bg-violet-500/30 text-violet-300' : 'invisible'}`}>
                   {msg.sender[0].toUpperCase()}
                 </div>
@@ -284,8 +284,8 @@ export default function MessageArea({
                 <div
                   className={`px-3.5 py-2 transition-all cursor-pointer ${
                     msg.isHighlighted 
-                      ? isDark ? 'bg-yellow-500/20 border-l-4 border-yellow-500 rounded-lg text-slate-200' : 'bg-yellow-100 border-l-4 border-yellow-500 rounded-lg text-slate-800'
-                      : isMine ? 'message-sent rounded-2xl rounded-br-md text-white' : 'message-received rounded-2xl rounded-bl-md'
+                      ? isDark ? 'bg-yellow-500/20 border-l-4 border-yellow-500  text-slate-200' : 'bg-yellow-100 border-l-4 border-yellow-500  text-slate-800'
+                      : isMine ? 'message-sent   text-white' : 'message-received  '
                   }`}
                   onDoubleClick={(e) => { e.stopPropagation(); setContextMessageId(contextMessageId === msg.id ? null : msg.id); }}
                   onContextMenu={e => { if (canManage && !isMine) { e.preventDefault(); setShowActions(msg.sender); } }}
@@ -320,7 +320,7 @@ export default function MessageArea({
                   <div className={`flex flex-wrap gap-1 mt-0.5 ${isMine ? 'justify-end' : 'justify-start'}`}>
                     {Object.entries(reactions).map(([emoji, users]) => (
                       <button key={emoji} onClick={() => onReaction?.(msg.id, emoji)}
-                        className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-all
+                        className={`flex items-center gap-0.5 px-1.5 py-0.5  text-xs transition-all
                           ${users.includes(username) ? 'bg-violet-500/30 border border-violet-500/40' : isDark ? 'bg-white/5 border border-white/5 hover:bg-white/10' : 'bg-black/5 border border-black/5 hover:bg-black/10'}`}>
                         <span>{emoji}</span>
                         <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{users.length}</span>
@@ -331,7 +331,7 @@ export default function MessageArea({
 
                 {/* Context Menu Popup */}
                 {contextMessageId === msg.id && (
-                  <div className={`absolute ${isMine ? 'right-0' : 'left-0'} bottom-full mb-1 min-w-[200px] flex flex-col rounded-xl shadow-xl z-50 animate-fade-in overflow-hidden
+                  <div className={`absolute ${isMine ? 'right-0' : 'left-0'} bottom-full mb-1 min-w-[200px] flex flex-col   z-50 animate-fade-in overflow-hidden
                     ${isDark ? 'bg-[#1a1a2e] border border-white/10' : 'bg-white border border-black/10'}`}>
                     
                     {/* Reactions Bar */}
@@ -382,7 +382,7 @@ export default function MessageArea({
                 )}
 
                 {showActions === msg.sender && canManage && !isMine && (
-                  <div className={`absolute bottom-full mb-1 right-0 rounded-lg shadow-xl z-50 overflow-hidden animate-fade-in ${isDark ? 'glass' : 'glass-light'}`}>
+                  <div className={`absolute bottom-full mb-1 right-0   z-50 overflow-hidden animate-fade-in ${isDark ? 'glass' : 'glass-light'}`}>
                     <button onClick={() => { onKick(msg.sender); setShowActions(null); }} className={`block w-full px-4 py-2 text-xs text-left text-red-400 ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>Kick {msg.sender}</button>
                     <button onClick={() => { onPromote(msg.sender); setShowActions(null); }} className={`block w-full px-4 py-2 text-xs text-left text-cyan-400 ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>Promote to Admin</button>
                     <button onClick={() => setShowActions(null)} className={`block w-full px-4 py-2 text-xs text-left ${isDark ? 'text-slate-400 hover:bg-white/5' : 'text-slate-500 hover:bg-black/5'}`}>Cancel</button>
@@ -395,15 +395,15 @@ export default function MessageArea({
 
         {typingUsers.length > 0 && (
           <div className="flex items-end gap-2 animate-fade-in">
-            <div className="w-7 h-7 rounded-full bg-violet-500/30 flex items-center justify-center text-xs font-bold text-violet-300">
+            <div className="w-7 h-7  bg-violet-500/30 flex items-center justify-center text-xs font-bold text-violet-300">
               {typingUsers[0][0].toUpperCase()}
             </div>
-            <div className={`px-4 py-3 rounded-2xl rounded-bl-md ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
+            <div className={`px-4 py-3   ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
               <div className="flex items-center gap-1.5">
                 <div className="flex gap-1">
-                  <span className={`w-1.5 h-1.5 rounded-full typing-dot ${isDark ? 'bg-slate-400' : 'bg-slate-500'}`} />
-                  <span className={`w-1.5 h-1.5 rounded-full typing-dot ${isDark ? 'bg-slate-400' : 'bg-slate-500'}`} />
-                  <span className={`w-1.5 h-1.5 rounded-full typing-dot ${isDark ? 'bg-slate-400' : 'bg-slate-500'}`} />
+                  <span className={`w-1.5 h-1.5  typing-dot ${isDark ? 'bg-slate-400' : 'bg-slate-500'}`} />
+                  <span className={`w-1.5 h-1.5  typing-dot ${isDark ? 'bg-slate-400' : 'bg-slate-500'}`} />
+                  <span className={`w-1.5 h-1.5  typing-dot ${isDark ? 'bg-slate-400' : 'bg-slate-500'}`} />
                 </div>
                 <span className={`text-xs ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{typingUsers.join(', ')}</span>
               </div>
@@ -414,7 +414,7 @@ export default function MessageArea({
       </div>
 
       {!atBottom && (
-        <button onClick={scrollToBottom} className="absolute bottom-20 right-6 p-2 rounded-full shadow-lg gradient-btn text-white animate-fade-in z-10">
+        <button onClick={scrollToBottom} className="absolute bottom-20 right-6 p-2   premium-btn text-white animate-fade-in z-10">
           <ArrowDown className="w-4 h-4" />
         </button>
       )}
@@ -427,7 +427,7 @@ export default function MessageArea({
 
       {/* Input Area */}
       {editMessageId && (
-        <div className={`px-4 py-2 text-xs flex items-center justify-between shadow -mb-1
+        <div className={`px-4 py-2 text-xs flex items-center justify-between  -mb-1
           ${isDark ? 'bg-[#1a1a2e] text-slate-300 border-t border-white/5' : 'bg-white text-slate-600 border-t border-black/5'}`}>
           <div className="flex items-center gap-2">
             <Pencil className="w-3.5 h-3.5 text-violet-400" />
@@ -438,16 +438,16 @@ export default function MessageArea({
       )}
       <div className={`px-4 py-3 border-t ${isDark ? 'border-white/5' : 'border-black/5'} ${editMessageId && !isDark ? 'bg-slate-50' : ''}`}>
         {canSend ? (
-          <div className={`flex items-center gap-2 rounded-2xl px-4 py-2.5 transition-all
+          <div className={`flex items-center gap-2  px-4 py-2.5 transition-all
             ${isDark ? 'bg-white/5 border border-white/5 focus-within:border-violet-500/30' : 'bg-black/5 border border-black/5 focus-within:border-violet-500/30'}`}>
             {!editMessageId && (
               <>
                 <button onClick={() => setShowEmoji(!showEmoji)}
-                  className={`p-1 rounded-lg transition-colors ${showEmoji ? 'text-violet-400' : isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>
+                  className={`p-1  transition-colors ${showEmoji ? 'text-violet-400' : isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>
                   <Smile className="w-5 h-5" />
                 </button>
                 <button onClick={handleSOS} title="Send SOS Location"
-                  className={`p-1 rounded-lg transition-colors ${isDark ? 'text-red-400/60 hover:text-red-400' : 'text-red-500/60 hover:text-red-500'}`}>
+                  className={`p-1  transition-colors ${isDark ? 'text-red-400/60 hover:text-red-400' : 'text-red-500/60 hover:text-red-500'}`}>
                   <MapPin className="w-5 h-5" />
                 </button>
               </>
@@ -459,12 +459,12 @@ export default function MessageArea({
               className={`flex-1 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'}`} 
               autoFocus={!!editMessageId} />
             <button id="send-btn" onClick={handleSend} disabled={!text.trim()}
-              className={`p-2 rounded-xl transition-all ${text.trim() ? 'gradient-btn text-white shadow-md' : isDark ? 'text-slate-600' : 'text-slate-300'}`}>
+              className={`p-2  transition-all ${text.trim() ? 'premium-btn text-white ' : isDark ? 'text-slate-600' : 'text-slate-300'}`}>
               <Send className="w-4 h-4" />
             </button>
           </div>
         ) : (
-          <div className={`text-center py-3 rounded-2xl ${isDark ? 'bg-white/5 text-slate-500' : 'bg-black/5 text-slate-400'}`}>
+          <div className={`text-center py-3  ${isDark ? 'bg-white/5 text-slate-500' : 'bg-black/5 text-slate-400'}`}>
             <p className="text-sm font-medium">📢 Announcement Room</p>
             <p className="text-xs">Only admins can send messages</p>
           </div>
