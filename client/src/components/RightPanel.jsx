@@ -1,4 +1,4 @@
-import { X, Crown, Shield, User as UserIcon, Moon, Sun, Volume2, VolumeX, Image as ImageIcon, Save, LogOut, BarChart3 } from 'lucide-react';
+import { X, Crown, Shield, User as UserIcon, Moon, Sun, Volume2, VolumeX, Image as ImageIcon, Save, LogOut, BarChart3, Flame } from 'lucide-react';
 import { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import Dashboard from './Dashboard';
@@ -7,7 +7,7 @@ export default function RightPanel({
   mode, onClose, username, members, userRole, room,
   onKick, onPromote, onDemote, onTransferOwnership,
   soundEnabled, onToggleSound, dashboardData,
-  onChangeUsername, onSignOut, onSetBackground
+  onChangeUsername, onSignOut, onSetBackground, onToggleBurner
 }) {
   const { isDark, toggle } = useTheme();
   const [bgInput, setBgInput] = useState(room?.backgroundUrl || '');
@@ -176,6 +176,24 @@ export default function RightPanel({
                   />
                   <button onClick={handleApplyBg} className="px-4 py-2 shrink-0 rounded-lg gradient-btn text-white text-xs font-semibold">Apply</button>
                 </div>
+              </div>
+            )}
+
+            {/* Burner Mode (Admin Only) */}
+            {(userRole === 'owner' || userRole === 'admin') && (
+              <div className={`p-3 rounded-xl flex items-center justify-between ${room?.burnerMode ? 'bg-orange-500/10 border border-orange-500/20' : isDark ? 'bg-white/5' : 'bg-black/5'}`}>
+                <div className="flex flex-col">
+                  <span className={`text-sm font-medium flex items-center gap-1.5 ${room?.burnerMode ? 'text-orange-400' : isDark ? 'text-white' : 'text-slate-800'}`}>
+                    <Flame className="w-4 h-4" /> Burner Mode
+                  </span>
+                  <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {room?.burnerMode ? 'Messages vanish after 30s' : 'Messages stay visible'}
+                  </span>
+                </div>
+                <button onClick={onToggleBurner}
+                  className={`w-10 h-5 rounded-full flex items-center transition-all ${room?.burnerMode ? 'bg-orange-500 justify-end' : isDark ? 'bg-white/10 justify-start' : 'bg-black/10 justify-start'}`}>
+                  <div className="w-4 h-4 bg-white rounded-full mx-0.5 shadow" />
+                </button>
               </div>
             )}
 

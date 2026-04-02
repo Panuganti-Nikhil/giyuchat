@@ -13,6 +13,7 @@ export default function Chat({
   onToggleDashboard, onToggleSound,
   onKick, onPromote, onDemote, onTransferOwnership,
   onChangeUsername, onSignOut, onSetBackground,
+  onReaction, onToggleBurner,
   sidebarOpen, onToggleSidebar,
 }) {
   const { isDark } = useTheme();
@@ -77,6 +78,7 @@ export default function Chat({
                 members={currentMembers}
                 onKick={onKick}
                 onPromote={onPromote}
+                onReaction={onReaction}
               />
             </div>
 
@@ -97,6 +99,7 @@ export default function Chat({
               onChangeUsername={onChangeUsername}
               onSignOut={onSignOut}
               onSetBackground={onSetBackground}
+              onToggleBurner={onToggleBurner}
             />
           </div>
         ) : (

@@ -26,11 +26,9 @@ export default function App() {
   const activeRoomRef = useRef(activeRoom);
   const soundRef = useRef(soundEnabled);
 
-  // Keep refs in sync
   useEffect(() => { activeRoomRef.current = activeRoom; }, [activeRoom]);
   useEffect(() => { soundRef.current = soundEnabled; }, [soundEnabled]);
 
-  // ── Toast helper ──
   const showToast = useCallback((message, type = 'info') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
@@ -48,15 +46,15 @@ export default function App() {
 
     socket.on('connect', () => {
       console.log('Connected to server');
-      // Re-authenticate on reconnect
-      const savedName = sessionStorage.getItem('cs-username');
-      if (savedName && !username) {
-        socket.emit('set-username', { username: savedName }, (res) => {
+      // Try token-based auth first
+      const savedToken = localStorage.getItem('giyu-token');
+      if (savedToken) {
+        socket.emit('auth-token', { token: savedToken }, (res) => {
           if (res?.success) {
             setUsername(res.username);
             setIsAuthenticated(true);
             // Rejoin saved rooms
-            const savedRooms = JSON.parse(sessionStorage.getItem('cs-rooms') || '[]');
+            const savedRooms = JSON.parse(localStorage.getItem('giyu-rooms') || '[]');
             savedRooms.forEach(room => {
               socket.emit('join-room', { roomCode: room.code }, (jr) => {
                 if (jr?.success) {
@@ -68,6 +66,9 @@ export default function App() {
                 }
               });
             });
+          } else {
+            // Token invalid, clear it
+            localStorage.removeItem('giyu-token');
           }
         });
       }
@@ -81,7 +82,6 @@ export default function App() {
         return { ...prev, [msg.roomCode]: [...roomMsgs, msg] };
       });
 
-      // Sound notification for messages from others
       if (msg.type === 'user' && msg.sender !== username && soundRef.current) {
         playNotification();
       }
@@ -92,6 +92,32 @@ export default function App() {
       if (backgroundUrl !== undefined) {
         setRooms(prev => prev.map(r => r.code === roomCode ? { ...r, backgroundUrl } : r));
       }
+    });
+
+    socket.on('message-reaction', ({ roomCode, messageId, reactions }) => {
+      setMessagesByRoom(prev => {
+        const roomMsgs = prev[roomCode];
+        if (!roomMsgs) return prev;
+        return {
+          ...prev,
+          [roomCode]: roomMsgs.map(m => m.id === messageId ? { ...m, reactions } : m),
+        };
+      });
+    });
+
+    socket.on('messages-expired', ({ roomCode, messageIds }) => {
+      setMessagesByRoom(prev => {
+        const roomMsgs = prev[roomCode];
+        if (!roomMsgs) return prev;
+        return {
+          ...prev,
+          [roomCode]: roomMsgs.filter(m => !messageIds.includes(m.id)),
+        };
+      });
+    });
+
+    socket.on('burner-update', ({ roomCode, burnerMode }) => {
+      setRooms(prev => prev.map(r => r.code === roomCode ? { ...r, burnerMode } : r));
     });
 
     socket.on('user-typing', ({ roomCode, username: typingUser }) => {
@@ -122,13 +148,10 @@ export default function App() {
     return () => { socket.disconnect(); };
   }, []); // eslint-disable-line
 
-  // ── Save to session storage ──
+  // ── Save to localStorage ──
   useEffect(() => {
-    if (username) sessionStorage.setItem('cs-username', username);
-  }, [username]);
-
-  useEffect(() => {
-    if (rooms.length > 0) sessionStorage.setItem('cs-rooms', JSON.stringify(rooms));
+    if (rooms.length > 0) localStorage.setItem('giyu-rooms', JSON.stringify(rooms));
+    else localStorage.removeItem('giyu-rooms');
   }, [rooms]);
 
   // ── Dashboard polling ──
@@ -150,12 +173,14 @@ export default function App() {
       if (res?.error) return showToast(res.error, 'error');
       setUsername(res.username);
       setIsAuthenticated(true);
+      // Save the token for persistence
+      if (res.token) localStorage.setItem('giyu-token', res.token);
       showToast(`Welcome, ${res.username}!`, 'success');
     });
   };
 
-  const handleCreateRoom = (roomName, isPublic = false) => {
-    socketRef.current?.emit('create-room', { roomName, isPublic }, (res) => {
+  const handleCreateRoom = (roomName, isPublic = false, pin = null, tags = []) => {
+    socketRef.current?.emit('create-room', { roomName, isPublic, pin, tags }, (res) => {
       if (res?.error) return showToast(res.error, 'error');
       setRooms(prev => [...prev, res.room]);
       setMessagesByRoom(prev => ({ ...prev, [res.room.code]: res.messages || [] }));
@@ -165,13 +190,16 @@ export default function App() {
     });
   };
 
-  const handleJoinRoom = (code) => {
+  const handleJoinRoom = (code, pin = null) => {
     if (rooms.find(r => r.code === code)) {
       setActiveRoom(code);
       return;
     }
-    socketRef.current?.emit('join-room', { roomCode: code }, (res) => {
-      if (res?.error) return showToast(res.error, 'error');
+    socketRef.current?.emit('join-room', { roomCode: code, pin }, (res) => {
+      if (res?.error) {
+        if (res.needsPin) return showToast('This room requires a PIN', 'error');
+        return showToast(res.error, 'error');
+      }
       setRooms(prev => {
         if (prev.find(r => r.code === res.room.code)) return prev;
         return [...prev, res.room];
@@ -244,6 +272,21 @@ export default function App() {
     });
   };
 
+  const handleReaction = (messageId, emoji) => {
+    if (!activeRoom) return;
+    socketRef.current?.emit('react-message', { roomCode: activeRoom, messageId, emoji }, (res) => {
+      if (res?.error) showToast(res.error, 'error');
+    });
+  };
+
+  const handleToggleBurner = () => {
+    if (!activeRoom) return;
+    socketRef.current?.emit('toggle-burner', { roomCode: activeRoom }, (res) => {
+      if (res?.error) showToast(res.error, 'error');
+      else showToast(res.burnerMode ? '🔥 Burner mode ON' : 'Burner mode OFF', 'success');
+    });
+  };
+
   const handleChangeUsername = (newUsername) => {
     socketRef.current?.emit('change-username', { newUsername }, (res) => {
       if (res?.error) return showToast(res.error, 'error');
@@ -260,8 +303,8 @@ export default function App() {
     setActiveRoom(null);
     setMessagesByRoom({});
     setMembersByRoom({});
-    sessionStorage.removeItem('cs-username');
-    sessionStorage.removeItem('cs-rooms');
+    localStorage.removeItem('giyu-token');
+    localStorage.removeItem('giyu-rooms');
     showToast('Signed out', 'success');
   };
 
@@ -303,6 +346,8 @@ export default function App() {
           onChangeUsername={handleChangeUsername}
           onSignOut={handleSignOut}
           onSetBackground={handleSetBackground}
+          onReaction={handleReaction}
+          onToggleBurner={handleToggleBurner}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={setSidebarOpen}
         />
@@ -311,7 +356,7 @@ export default function App() {
       {/* Toast Notification */}
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] toast">
-          <div className={`px-5 py-3 rounded-xl shadow-2xl backdrop-blur-xl text-sm font-medium
+          <div className={`px-5 py-3 rounded-xl shadow-2xl text-sm font-medium
             ${toast.type === 'error'
               ? 'bg-red-500/20 border border-red-500/30 text-red-300'
               : toast.type === 'success'

@@ -20,14 +20,31 @@ const io = new Server(server, {
 });
 
 // ── In-Memory Stores ──
-const rooms = new Map();       // code -> { name, code, owner, admins, members, createdAt, totalMessages, messageCounts }
-const messages = new Map();    // code -> [{ id, sender, text, timestamp, type }]
-const socketData = new Map();  // socketId -> { username, rooms, sessionStart, messagesSent, lastActive }
-const rateLimits = new Map();  // socketId -> [timestamps]
+const rooms = new Map();
+const messages = new Map();
+const socketData = new Map();
+const rateLimits = new Map();
+const userTokens = new Map();  // token -> { username, createdAt }
 
 const MAX_MESSAGES = 100;
 const RATE_WINDOW = 3000;
 const RATE_MAX = 5;
+
+// ── Profanity Filter ──
+const PROFANITY_LIST = [
+  'fuck','shit','bitch','ass','dick','damn','bastard','crap',
+  'piss','slut','whore','cock','nigger','nigga','faggot','retard',
+  'cunt','motherfucker','asshole','bullshit','dumbass','jackass',
+];
+
+function filterProfanity(text) {
+  let filtered = text;
+  for (const word of PROFANITY_LIST) {
+    const regex = new RegExp(`\\b${word}\\b`, 'gi');
+    filtered = filtered.replace(regex, '*'.repeat(word.length));
+  }
+  return filtered;
+}
 
 // ── Helpers ──
 function sanitize(str) {
@@ -87,6 +104,38 @@ function emitSystem(code, text) {
   io.to(code).emit('new-message', msg);
 }
 
+// ── Burner cleanup intervals per room ──
+const burnerIntervals = new Map();
+
+function startBurnerInterval(code) {
+  if (burnerIntervals.has(code)) return;
+  const interval = setInterval(() => {
+    const room = rooms.get(code);
+    if (!room || !room.burnerMode) {
+      clearInterval(interval);
+      burnerIntervals.delete(code);
+      return;
+    }
+    const now = Date.now();
+    const roomMsgs = messages.get(code);
+    if (!roomMsgs) return;
+    const expired = [];
+    const remaining = [];
+    for (const msg of roomMsgs) {
+      if (msg.type === 'user' && now - msg.timestamp > 30000) {
+        expired.push(msg.id);
+      } else {
+        remaining.push(msg);
+      }
+    }
+    if (expired.length > 0) {
+      messages.set(code, remaining);
+      io.to(code).emit('messages-expired', { roomCode: code, messageIds: expired });
+    }
+  }, 5000);
+  burnerIntervals.set(code, interval);
+}
+
 // ── Socket Handling ──
 io.on('connection', (socket) => {
   console.log(`+ connected: ${socket.id}`);
@@ -96,6 +145,27 @@ io.on('connection', (socket) => {
     sessionStart: Date.now(),
     messagesSent: 0,
     lastActive: Date.now(),
+  });
+
+  // ── Token-based Auth (persistent username) ──
+  socket.on('auth-token', ({ token }, cb) => {
+    if (!token || typeof token !== 'string') return cb({ error: 'Invalid token.' });
+    const saved = userTokens.get(token);
+    if (!saved) return cb({ error: 'Token expired or invalid.' });
+
+    // Check if username is currently in use by another socket
+    for (let [id, sData] of socketData.entries()) {
+      if (id !== socket.id && sData.username?.toLowerCase() === saved.username.toLowerCase()) {
+        // Force disconnect the old socket
+        const oldSocket = io.sockets.sockets.get(id);
+        if (oldSocket) oldSocket.disconnect(true);
+        socketData.delete(id);
+        break;
+      }
+    }
+
+    socketData.get(socket.id).username = saved.username;
+    cb({ success: true, username: saved.username });
   });
 
   socket.on('set-username', ({ username }, cb) => {
@@ -109,7 +179,12 @@ io.on('connection', (socket) => {
     }
     
     socketData.get(socket.id).username = clean;
-    cb({ success: true, username: clean });
+
+    // Generate a persistent token
+    const token = uuidv4();
+    userTokens.set(token, { username: clean, createdAt: Date.now() });
+
+    cb({ success: true, username: clean, token });
   });
   
   socket.on('change-username', ({ newUsername }, cb) => {
@@ -131,6 +206,14 @@ io.on('connection', (socket) => {
     
     const oldName = data.username;
     data.username = clean;
+
+    // Update token mapping
+    for (const [token, td] of userTokens.entries()) {
+      if (td.username === oldName) {
+        td.username = clean;
+        break;
+      }
+    }
     
     for (const code of data.rooms) {
       const room = rooms.get(code);
@@ -161,7 +244,7 @@ io.on('connection', (socket) => {
     cb({ success: true, username: clean });
   });
 
-  socket.on('create-room', ({ roomName, isPublic }, cb) => {
+  socket.on('create-room', ({ roomName, isPublic, pin, tags }, cb) => {
     const data = socketData.get(socket.id);
     if (!data?.username) return cb({ error: 'Set username first.' });
     const name = sanitize(roomName);
@@ -171,6 +254,8 @@ io.on('connection', (socket) => {
     while (rooms.has(code)) code = generateCode();
 
     const visibility = isPublic ? 'public' : 'private';
+    const roomPin = (isPublic && pin && /^\d{4}$/.test(pin)) ? pin : null;
+    const roomTags = Array.isArray(tags) ? tags.filter(t => typeof t === 'string').slice(0, 3).map(t => sanitize(t).slice(0, 20)) : [];
 
     rooms.set(code, {
       name, code, owner: data.username,
@@ -181,12 +266,16 @@ io.on('connection', (socket) => {
       messageCounts: new Map([[data.username, 0]]),
       backgroundUrl: null,
       visibility,
+      pin: roomPin,
+      tags: roomTags,
+      burnerMode: false,
+      peakOnline: 1,
     });
     messages.set(code, []);
     data.rooms.add(code);
     socket.join(code);
 
-    cb({ success: true, room: { name, code, role: 'owner', backgroundUrl: null, visibility }, messages: [] });
+    cb({ success: true, room: { name, code, role: 'owner', backgroundUrl: null, visibility, hasPin: !!roomPin, tags: roomTags, burnerMode: false }, messages: [] });
     io.to(code).emit('room-update', { roomCode: code, members: getRoomMembers(code), backgroundUrl: null });
   });
 
@@ -203,20 +292,26 @@ io.on('connection', (socket) => {
           memberCount: room.members.size,
           onlineCount,
           createdAt: room.createdAt,
+          hasPin: !!room.pin,
+          tags: room.tags || [],
         });
       }
     }
-    // Sort by online count descending
     publicRooms.sort((a, b) => b.onlineCount - a.onlineCount);
     cb({ success: true, rooms: publicRooms });
   });
 
-  socket.on('join-room', ({ roomCode }, cb) => {
+  socket.on('join-room', ({ roomCode, pin }, cb) => {
     const data = socketData.get(socket.id);
     if (!data?.username) return cb({ error: 'Set username first.' });
     const code = roomCode?.toUpperCase()?.trim();
     const room = rooms.get(code);
     if (!room) return cb({ error: 'Room not found. Check the code.' });
+
+    // Check PIN for protected public rooms
+    if (room.pin && !room.members.has(data.username)) {
+      if (!pin || pin !== room.pin) return cb({ error: 'This room requires a 4-digit PIN to enter.', needsPin: true });
+    }
 
     const isRejoining = room.members.has(data.username);
     room.members.set(data.username, { socketId: socket.id, online: true, joinedAt: Date.now() });
@@ -225,8 +320,12 @@ io.on('connection', (socket) => {
     data.rooms.add(code);
     socket.join(code);
 
+    // Track peak online
+    const currentOnline = Array.from(room.members.values()).filter(m => m.online).length;
+    if (currentOnline > (room.peakOnline || 0)) room.peakOnline = currentOnline;
+
     const role = room.owner === data.username ? 'owner' : room.admins.has(data.username) ? 'admin' : 'member';
-    cb({ success: true, room: { name: room.name, code, role, backgroundUrl: room.backgroundUrl }, messages: messages.get(code) || [] });
+    cb({ success: true, room: { name: room.name, code, role, backgroundUrl: room.backgroundUrl, burnerMode: room.burnerMode, tags: room.tags || [] }, messages: messages.get(code) || [] });
 
     io.to(code).emit('room-update', { roomCode: code, members: getRoomMembers(code), backgroundUrl: room.backgroundUrl });
     if (!isRejoining) emitSystem(code, `${data.username} joined the room`);
@@ -240,10 +339,13 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomCode);
     if (!room || !room.members.has(data.username)) return cb?.({ error: 'Not in this room.' });
 
-    const clean = sanitize(text);
+    let clean = sanitize(text);
     if (!clean) return cb?.({ error: 'Empty message.' });
 
-    const msg = { id: uuidv4(), sender: data.username, text: clean, timestamp: Date.now(), type: 'user', roomCode };
+    // Apply profanity filter
+    clean = filterProfanity(clean);
+
+    const msg = { id: uuidv4(), sender: data.username, text: clean, timestamp: Date.now(), type: 'user', roomCode, reactions: {} };
     const roomMsgs = messages.get(roomCode);
     roomMsgs.push(msg);
     if (roomMsgs.length > MAX_MESSAGES) roomMsgs.shift();
@@ -255,6 +357,54 @@ io.on('connection', (socket) => {
 
     io.to(roomCode).emit('new-message', msg);
     cb?.({ success: true });
+  });
+
+  // ── Reactions ──
+  socket.on('react-message', ({ roomCode, messageId, emoji }, cb) => {
+    const data = socketData.get(socket.id);
+    if (!data?.username) return cb?.({ error: 'Not authenticated.' });
+    const room = rooms.get(roomCode);
+    if (!room || !room.members.has(data.username)) return cb?.({ error: 'Not in this room.' });
+
+    const allowedEmojis = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
+    if (!allowedEmojis.includes(emoji)) return cb?.({ error: 'Invalid reaction.' });
+
+    const roomMsgs = messages.get(roomCode);
+    const msg = roomMsgs?.find(m => m.id === messageId);
+    if (!msg) return cb?.({ error: 'Message not found.' });
+
+    if (!msg.reactions) msg.reactions = {};
+    if (!msg.reactions[emoji]) msg.reactions[emoji] = [];
+
+    const idx = msg.reactions[emoji].indexOf(data.username);
+    if (idx > -1) {
+      msg.reactions[emoji].splice(idx, 1);
+      if (msg.reactions[emoji].length === 0) delete msg.reactions[emoji];
+    } else {
+      msg.reactions[emoji].push(data.username);
+    }
+
+    io.to(roomCode).emit('message-reaction', { roomCode, messageId, reactions: msg.reactions });
+    cb?.({ success: true });
+  });
+
+  // ── Burner Mode Toggle ──
+  socket.on('toggle-burner', ({ roomCode }, cb) => {
+    const data = socketData.get(socket.id);
+    if (!data?.username) return cb?.({ error: 'Not authenticated.' });
+    const room = rooms.get(roomCode);
+    if (!room) return cb?.({ error: 'Room not found.' });
+    if (room.owner !== data.username && !room.admins.has(data.username)) return cb?.({ error: 'Not authorized.' });
+
+    room.burnerMode = !room.burnerMode;
+    if (room.burnerMode) {
+      startBurnerInterval(roomCode);
+      emitSystem(roomCode, `🔥 Burner mode ON — messages disappear after 30s`);
+    } else {
+      emitSystem(roomCode, `Burner mode OFF — messages will persist`);
+    }
+    io.to(roomCode).emit('burner-update', { roomCode, burnerMode: room.burnerMode });
+    cb?.({ success: true, burnerMode: room.burnerMode });
   });
 
   socket.on('typing', ({ roomCode }) => {
@@ -372,6 +522,10 @@ io.on('connection', (socket) => {
     if (room.members.size === 0) {
       rooms.delete(roomCode);
       messages.delete(roomCode);
+      if (burnerIntervals.has(roomCode)) {
+        clearInterval(burnerIntervals.get(roomCode));
+        burnerIntervals.delete(roomCode);
+      }
     } else {
       io.to(roomCode).emit('room-update', { roomCode, members: getRoomMembers(roomCode), backgroundUrl: room.backgroundUrl });
       emitSystem(roomCode, `${data.username} left the room`);
@@ -397,6 +551,8 @@ io.on('connection', (socket) => {
           totalMessages: room.totalMessages,
           onlineCount: Array.from(room.members.values()).filter(m => m.online).length,
           memberCount: room.members.size,
+          peakOnline: room.peakOnline || 0,
+          burnerMode: room.burnerMode || false,
         } : null,
         leaderboard: room ? getLeaderboard(roomCode) : [],
       },
