@@ -87,11 +87,37 @@ export default function App() {
       }
     });
 
-    socket.on('room-update', ({ roomCode, members, backgroundUrl }) => {
+    socket.on('room-update', ({ roomCode, members, backgroundUrl, pinnedMessageId }) => {
       setMembersByRoom(prev => ({ ...prev, [roomCode]: members }));
-      if (backgroundUrl !== undefined) {
-        setRooms(prev => prev.map(r => r.code === roomCode ? { ...r, backgroundUrl } : r));
-      }
+      setRooms(prev => prev.map(r => {
+        if (r.code !== roomCode) return r;
+        const updates = {};
+        if (backgroundUrl !== undefined) updates.backgroundUrl = backgroundUrl;
+        if (pinnedMessageId !== undefined) updates.pinnedMessageId = pinnedMessageId;
+        return { ...r, ...updates };
+      }));
+    });
+
+    socket.on('message-updated', ({ roomCode, messageId, updates }) => {
+      setMessagesByRoom(prev => {
+        const roomMsgs = prev[roomCode];
+        if (!roomMsgs) return prev;
+        return {
+          ...prev,
+          [roomCode]: roomMsgs.map(m => m.id === messageId ? { ...m, ...updates } : m),
+        };
+      });
+    });
+
+    socket.on('message-deleted', ({ roomCode, messageId }) => {
+      setMessagesByRoom(prev => {
+        const roomMsgs = prev[roomCode];
+        if (!roomMsgs) return prev;
+        return {
+          ...prev,
+          [roomCode]: roomMsgs.filter(m => m.id !== messageId),
+        };
+      });
     });
 
     socket.on('message-reaction', ({ roomCode, messageId, reactions }) => {
@@ -249,6 +275,34 @@ export default function App() {
     });
   };
 
+  const handleEditMessage = (messageId, newText) => {
+    if (!activeRoom) return;
+    socketRef.current?.emit('edit-message', { roomCode: activeRoom, messageId, newText }, (res) => {
+      if (res?.error) showToast(res.error, 'error');
+    });
+  };
+
+  const handleDeleteMessage = (messageId) => {
+    if (!activeRoom) return;
+    socketRef.current?.emit('delete-message', { roomCode: activeRoom, messageId }, (res) => {
+      if (res?.error) showToast(res.error, 'error');
+    });
+  };
+
+  const handlePinMessage = (messageId) => {
+    if (!activeRoom) return;
+    socketRef.current?.emit('pin-message', { roomCode: activeRoom, messageId }, (res) => {
+      if (res?.error) showToast(res.error, 'error');
+    });
+  };
+
+  const handleHighlightMessage = (messageId) => {
+    if (!activeRoom) return;
+    socketRef.current?.emit('highlight-message', { roomCode: activeRoom, messageId }, (res) => {
+      if (res?.error) showToast(res.error, 'error');
+    });
+  };
+
   const handleTyping = () => {
     if (activeRoom) socketRef.current?.emit('typing', { roomCode: activeRoom });
   };
@@ -371,6 +425,10 @@ export default function App() {
           onToggleBurner={handleToggleBurner}
           onSetColor={handleSetColor}
           onPingTest={handlePingTest}
+          onEditMessage={handleEditMessage}
+          onDeleteMessage={handleDeleteMessage}
+          onPinMessage={handlePinMessage}
+          onHighlightMessage={handleHighlightMessage}
           socket={socketRef.current}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={setSidebarOpen}

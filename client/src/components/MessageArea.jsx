@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Smile, ArrowDown, MapPin, Check } from 'lucide-react';
+import { Send, Smile, ArrowDown, MapPin, Check, Pencil, Trash2, Pin, PinOff, Zap, ZapOff, X } from 'lucide-react';
 import EmojiPicker from 'emoji-picker-react';
 import { useTheme } from '../context/ThemeContext';
 
 const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
 
-// Color map for username colors
 const COLOR_MAP = {
   red: 'text-red-400', orange: 'text-orange-400', amber: 'text-amber-400',
   yellow: 'text-yellow-400', lime: 'text-lime-400', green: 'text-green-400',
@@ -15,7 +14,6 @@ const COLOR_MAP = {
   pink: 'text-pink-400', rose: 'text-rose-400',
 };
 
-// Lightweight markdown + mention + image parser
 function renderMessageText(text, isDark, members) {
   const memberNames = (members || []).map(m => m.username);
   const IMAGE_REGEX = /(https?:\/\/\S+\.(?:jpg|jpeg|png|gif|webp)(?:\?\S*)?)/gi;
@@ -78,12 +76,22 @@ function renderMessageText(text, isDark, members) {
   return processInline(text);
 }
 
-export default function MessageArea({ messages, username, typingUsers, onSendMessage, onTyping, onStopTyping, userRole, members, onKick, onPromote, onReaction, onSetColor, onPingTest, announcementOnly }) {
+export default function MessageArea({
+  messages, username, typingUsers, onSendMessage, onTyping, onStopTyping, userRole, members, 
+  onKick, onPromote, onReaction, onSetColor, onPingTest, announcementOnly,
+  onEditMessage, onDeleteMessage, onPinMessage, onHighlightMessage, pinnedMessageId
+}) {
   const { isDark } = useTheme();
   const [text, setText] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
   const [showActions, setShowActions] = useState(null);
-  const [showReactions, setShowReactions] = useState(null);
+  
+  // Context Menu State
+  const [contextMessageId, setContextMessageId] = useState(null);
+  
+  // Edit State
+  const [editMessageId, setEditMessageId] = useState(null);
+
   const [atBottom, setAtBottom] = useState(true);
   const [deliveredIds, setDeliveredIds] = useState(new Set());
   const [sendingIds, setSendingIds] = useState(new Set());
@@ -124,12 +132,16 @@ export default function MessageArea({ messages, username, typingUsers, onSendMes
     onStopTyping();
     clearTimeout(typingTimerRef.current);
 
-    // Handle slash commands locally
+    if (editMessageId) {
+      if (onEditMessage) onEditMessage(editMessageId, msgText);
+      setEditMessageId(null);
+      return;
+    }
+
     if (msgText.startsWith('/ping')) {
       if (onPingTest) {
         const latency = await onPingTest();
         const quality = latency < 150 ? '🟢 Good' : latency < 400 ? '🟡 Okay' : '🔴 Poor';
-        // Add a local-only system message
         const fakeMsg = {
           id: `ping-${Date.now()}`,
           text: `📶 Signal: ${latency}ms (${quality})`,
@@ -138,8 +150,6 @@ export default function MessageArea({ messages, username, typingUsers, onSendMes
           roomCode: '',
           localOnly: true,
         };
-        // We can't add to server messages, so we need to handle this differently
-        // Let's use a temporary state
         setLocalMessages(prev => [...prev, fakeMsg]);
       }
       return;
@@ -151,7 +161,6 @@ export default function MessageArea({ messages, username, typingUsers, onSendMes
       return;
     }
 
-    // Track delivery
     const tempId = `sending-${Date.now()}`;
     setSendingIds(prev => new Set([...prev, tempId]));
 
@@ -159,12 +168,9 @@ export default function MessageArea({ messages, username, typingUsers, onSendMes
     setSendingIds(prev => { const n = new Set(prev); n.delete(tempId); return n; });
 
     if (delivered) {
-      // The latest message from this user will be the delivered one
-      // We'll mark it after a brief delay to match it
       setTimeout(() => {
         setDeliveredIds(prev => {
           const n = new Set(prev);
-          // Find the latest message from us
           const latest = [...messages].reverse().find(m => m.sender === username && m.type === 'user');
           if (latest) n.add(latest.id);
           return n;
@@ -173,10 +179,13 @@ export default function MessageArea({ messages, username, typingUsers, onSendMes
     }
   };
 
-  // Local-only messages (for /ping results)
+  const handleCancelEdit = () => {
+    setEditMessageId(null);
+    setText('');
+  };
+
   const [localMessages, setLocalMessages] = useState([]);
 
-  // Auto-mark new own messages as delivered when they appear
   useEffect(() => {
     const myMsgs = messages.filter(m => m.sender === username && m.type === 'user');
     if (myMsgs.length > 0) {
@@ -203,14 +212,38 @@ export default function MessageArea({ messages, username, typingUsers, onSendMes
   const formatTime = (ts) => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const canManage = userRole === 'owner' || userRole === 'admin';
-
-  // Merge local + server messages
   const allMessages = [...messages, ...localMessages].sort((a, b) => a.timestamp - b.timestamp);
+  
+  const pinnedMessage = messages.find(m => m.id === pinnedMessageId);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 relative">
+      {/* Pinned Message Banner */}
+      {pinnedMessage && (
+        <div className={`px-4 py-2 border-b flex items-center justify-between gap-3 shadow-sm z-10 
+          ${isDark ? 'bg-amber-500/10 border-amber-500/20' : 'bg-amber-50 border-amber-200'}`}>
+          <div className="flex items-center gap-2 overflow-hidden flex-1 cursor-pointer" 
+               onClick={() => {
+                 // Try to scroll to message roughly
+                 const el = document.getElementById(`msg-${pinnedMessage.id}`);
+                 if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+               }}>
+            <Pin className={`w-3.5 h-3.5 flex-shrink-0 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+            <div className="truncate text-sm flex-1">
+              <span className="font-semibold mr-1">{pinnedMessage.sender}:</span>
+              <span className={isDark ? 'text-slate-300' : 'text-slate-700'}>{pinnedMessage.text}</span>
+            </div>
+          </div>
+          {canManage && (
+            <button onClick={() => onPinMessage?.(pinnedMessage.id)} className={`p-1 rounded opacity-70 hover:opacity-100 ${isDark ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}>
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Messages */}
-      <div ref={containerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5">
+      <div ref={containerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5" onClick={() => setContextMessageId(null)}>
         {allMessages.length === 0 && (
           <div className={`flex items-center justify-center h-full ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
             <div className="text-center">
@@ -223,7 +256,7 @@ export default function MessageArea({ messages, username, typingUsers, onSendMes
         {allMessages.map((msg, i) => {
           if (msg.type === 'system') {
             return (
-              <div key={msg.id} className="flex justify-center py-1 animate-fade-in">
+              <div key={msg.id} id={`msg-${msg.id}`} className="flex justify-center py-1 animate-fade-in">
                 <span className={`text-xs px-3 py-1 rounded-full ${isDark ? 'bg-white/5 text-slate-500' : 'bg-black/5 text-slate-400'}`}>
                   {msg.text}
                 </span>
@@ -239,7 +272,7 @@ export default function MessageArea({ messages, username, typingUsers, onSendMes
           const senderColor = msg.senderColor ? COLOR_MAP[msg.senderColor] : 'text-violet-400';
 
           return (
-            <div key={msg.id} className={`flex items-end gap-2 animate-fade-in ${isMine ? 'justify-end' : 'justify-start'}`}>
+            <div key={msg.id} id={`msg-${msg.id}`} className={`flex items-end gap-2 animate-fade-in ${isMine ? 'justify-end' : 'justify-start'}`}>
               {!isMine && (
                 <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold
                   ${showAvatar ? 'bg-violet-500/30 text-violet-300' : 'invisible'}`}>
@@ -249,21 +282,34 @@ export default function MessageArea({ messages, username, typingUsers, onSendMes
 
               <div className="relative max-w-[75%] lg:max-w-[55%] group">
                 <div
-                  className={`px-3.5 py-2 ${isMine ? 'message-sent rounded-2xl rounded-br-md text-white' : 'message-received rounded-2xl rounded-bl-md'}`}
-                  onDoubleClick={() => onReaction && setShowReactions(showReactions === msg.id ? null : msg.id)}
+                  className={`px-3.5 py-2 transition-all cursor-pointer ${
+                    msg.isHighlighted 
+                      ? isDark ? 'bg-yellow-500/20 border-l-4 border-yellow-500 rounded-lg text-slate-200' : 'bg-yellow-100 border-l-4 border-yellow-500 rounded-lg text-slate-800'
+                      : isMine ? 'message-sent rounded-2xl rounded-br-md text-white' : 'message-received rounded-2xl rounded-bl-md'
+                  }`}
+                  onDoubleClick={(e) => { e.stopPropagation(); setContextMessageId(contextMessageId === msg.id ? null : msg.id); }}
                   onContextMenu={e => { if (canManage && !isMine) { e.preventDefault(); setShowActions(msg.sender); } }}
                 >
-                  {!isMine && showAvatar && (
+                  {!isMine && showAvatar && !msg.isHighlighted && (
                     <p className={`text-xs font-semibold mb-0.5 ${senderColor}`}>{msg.sender}</p>
                   )}
-                  <div className={`text-sm leading-relaxed break-words ${!isMine && isDark ? 'text-slate-200' : !isMine ? 'text-slate-700' : ''}`}>
+                  {msg.isHighlighted && !isMine && (
+                     <p className={`text-xs font-bold mb-0.5 text-yellow-600 dark:text-yellow-400 flex items-center gap-1`}>
+                       <Zap className="w-3 h-3" /> {msg.sender}
+                     </p>
+                  )}
+                  
+                  <div className={`text-sm leading-relaxed break-words ${!isMine && isDark && !msg.isHighlighted ? 'text-slate-200' : !isMine && !msg.isHighlighted ? 'text-slate-700' : ''}`}>
                     {renderMessageText(msg.text, isDark, members)}
                   </div>
+                  
                   <div className="flex items-center justify-end gap-1 mt-0.5">
-                    <p className={`text-[10px] leading-none ${isMine ? 'text-white/50' : isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {msg.isEdited && (
+                      <p className={`text-[10px] leading-none ${isMine && !msg.isHighlighted ? 'text-white/70' : isDark ? 'text-slate-400' : 'text-slate-500'}`}>(edited)</p>
+                    )}
+                    <p className={`text-[10px] leading-none ${isMine && !msg.isHighlighted ? 'text-white/50' : isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                       {formatTime(msg.timestamp)}
                     </p>
-                    {/* Delivery checkmark */}
                     {isMine && (
                       <Check className={`w-3 h-3 ${isDelivered ? 'text-emerald-400' : 'text-white/30'}`} />
                     )}
@@ -283,13 +329,55 @@ export default function MessageArea({ messages, username, typingUsers, onSendMes
                   </div>
                 )}
 
-                {showReactions === msg.id && (
-                  <div className={`absolute ${isMine ? 'right-0' : 'left-0'} bottom-full mb-1 flex gap-1 px-2 py-1.5 rounded-xl shadow-xl z-50 animate-fade-in
+                {/* Context Menu Popup */}
+                {contextMessageId === msg.id && (
+                  <div className={`absolute ${isMine ? 'right-0' : 'left-0'} bottom-full mb-1 min-w-[200px] flex flex-col rounded-xl shadow-xl z-50 animate-fade-in overflow-hidden
                     ${isDark ? 'bg-[#1a1a2e] border border-white/10' : 'bg-white border border-black/10'}`}>
-                    {REACTION_EMOJIS.map(emoji => (
-                      <button key={emoji} onClick={() => { onReaction?.(msg.id, emoji); setShowReactions(null); }}
-                        className="text-lg hover:scale-125 transition-transform p-0.5">{emoji}</button>
-                    ))}
+                    
+                    {/* Reactions Bar */}
+                    <div className={`flex gap-1 justify-between px-3 py-2 border-b ${isDark ? 'border-white/10' : 'border-black/5'}`}>
+                      {REACTION_EMOJIS.map(emoji => (
+                        <button key={emoji} onClick={() => { onReaction?.(msg.id, emoji); setContextMessageId(null); }}
+                          className="text-lg hover:scale-125 transition-transform">{emoji}</button>
+                      ))}
+                    </div>
+                    
+                    {/* Actions List */}
+                    <div className="py-1">
+                      {isMine && (
+                        <>
+                          <button onClick={() => { setEditMessageId(msg.id); setText(msg.text); setContextMessageId(null); }} 
+                                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm ${isDark ? 'hover:bg-white/5 text-slate-300' : 'hover:bg-black/5 text-slate-700'}`}>
+                            <Pencil className="w-4 h-4" /> Edit Message
+                          </button>
+                          <button onClick={() => { onDeleteMessage?.(msg.id); setContextMessageId(null); }} 
+                                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
+                            <Trash2 className="w-4 h-4" /> Unsend Message
+                          </button>
+                        </>
+                      )}
+                      
+                      {canManage && (
+                        <>
+                          <button onClick={() => { onPinMessage?.(msg.id); setContextMessageId(null); }} 
+                                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-amber-500 ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
+                            {pinnedMessageId === msg.id ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
+                            {pinnedMessageId === msg.id ? 'Unpin Message' : 'Pin to Top'}
+                          </button>
+                          <button onClick={() => { onHighlightMessage?.(msg.id); setContextMessageId(null); }} 
+                                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-yellow-500 ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
+                            {msg.isHighlighted ? <ZapOff className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
+                            {msg.isHighlighted ? 'Unhighlight' : 'Highlight Message'}
+                          </button>
+                        </>
+                      )}
+                      
+                      {!isMine && !canManage && (
+                         <div className={`px-3 py-2 text-xs text-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                           Double tap for emojis
+                         </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -338,30 +426,44 @@ export default function MessageArea({ messages, username, typingUsers, onSendMes
       )}
 
       {/* Input Area */}
-      <div className={`px-4 py-3 border-t ${isDark ? 'border-white/5' : 'border-black/5'}`}>
+      {editMessageId && (
+        <div className={`px-4 py-2 text-xs flex items-center justify-between shadow -mb-1
+          ${isDark ? 'bg-[#1a1a2e] text-slate-300 border-t border-white/5' : 'bg-white text-slate-600 border-t border-black/5'}`}>
+          <div className="flex items-center gap-2">
+            <Pencil className="w-3.5 h-3.5 text-violet-400" />
+            <span>Editing message...</span>
+          </div>
+          <button onClick={handleCancelEdit} className={`font-semibold hover:text-red-400 transition-colors`}>Cancel</button>
+        </div>
+      )}
+      <div className={`px-4 py-3 border-t ${isDark ? 'border-white/5' : 'border-black/5'} ${editMessageId && !isDark ? 'bg-slate-50' : ''}`}>
         {canSend ? (
           <div className={`flex items-center gap-2 rounded-2xl px-4 py-2.5 transition-all
             ${isDark ? 'bg-white/5 border border-white/5 focus-within:border-violet-500/30' : 'bg-black/5 border border-black/5 focus-within:border-violet-500/30'}`}>
-            <button onClick={() => setShowEmoji(!showEmoji)}
-              className={`p-1 rounded-lg transition-colors ${showEmoji ? 'text-violet-400' : isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>
-              <Smile className="w-5 h-5" />
-            </button>
-            <button onClick={handleSOS} title="Send SOS Location"
-              className={`p-1 rounded-lg transition-colors ${isDark ? 'text-red-400/60 hover:text-red-400' : 'text-red-500/60 hover:text-red-500'}`}>
-              <MapPin className="w-5 h-5" />
-            </button>
+            {!editMessageId && (
+              <>
+                <button onClick={() => setShowEmoji(!showEmoji)}
+                  className={`p-1 rounded-lg transition-colors ${showEmoji ? 'text-violet-400' : isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>
+                  <Smile className="w-5 h-5" />
+                </button>
+                <button onClick={handleSOS} title="Send SOS Location"
+                  className={`p-1 rounded-lg transition-colors ${isDark ? 'text-red-400/60 hover:text-red-400' : 'text-red-500/60 hover:text-red-500'}`}>
+                  <MapPin className="w-5 h-5" />
+                </button>
+              </>
+            )}
             <input id="message-input" type="text" value={text} onChange={handleChange}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              onClick={() => { setShowEmoji(false); setShowReactions(null); }}
-              placeholder="/ping · /color red · @mention · **bold**"
-              className={`flex-1 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'}`} />
+              onClick={() => { setShowEmoji(false); setContextMessageId(null); }}
+              placeholder={editMessageId ? "Edit your message..." : "/ping · /color red · @mention · **bold**"}
+              className={`flex-1 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'}`} 
+              autoFocus={!!editMessageId} />
             <button id="send-btn" onClick={handleSend} disabled={!text.trim()}
               className={`p-2 rounded-xl transition-all ${text.trim() ? 'gradient-btn text-white shadow-md' : isDark ? 'text-slate-600' : 'text-slate-300'}`}>
               <Send className="w-4 h-4" />
             </button>
           </div>
         ) : (
-          /* Announcement mode - read only */
           <div className={`text-center py-3 rounded-2xl ${isDark ? 'bg-white/5 text-slate-500' : 'bg-black/5 text-slate-400'}`}>
             <p className="text-sm font-medium">📢 Announcement Room</p>
             <p className="text-xs">Only admins can send messages</p>

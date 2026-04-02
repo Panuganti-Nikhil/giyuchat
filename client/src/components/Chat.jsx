@@ -15,6 +15,7 @@ export default function Chat({
   onChangeUsername, onSignOut, onSetBackground,
   onReaction, onToggleBurner,
   onSetColor, onPingTest, socket,
+  onEditMessage, onDeleteMessage, onPinMessage, onHighlightMessage,
   sidebarOpen, onToggleSidebar,
 }) {
   const { isDark } = useTheme();
@@ -83,6 +84,11 @@ export default function Chat({
                 onSetColor={onSetColor}
                 onPingTest={onPingTest}
                 announcementOnly={currentRoom.announcementOnly}
+                onEditMessage={onEditMessage}
+                onDeleteMessage={onDeleteMessage}
+                onPinMessage={onPinMessage}
+                onHighlightMessage={onHighlightMessage}
+                pinnedMessageId={currentRoom.pinnedMessageId}
               />
             </div>
 

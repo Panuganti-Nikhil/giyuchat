@@ -263,6 +263,7 @@ io.on('connection', (socket) => {
       burnerMode: false,
       peakOnline: 1,
       announcementOnly: !!announcementOnly,
+      pinnedMessageId: null,
     });
     messages.set(code, []);
     data.rooms.add(code);
@@ -318,9 +319,9 @@ io.on('connection', (socket) => {
     if (currentOnline > (room.peakOnline || 0)) room.peakOnline = currentOnline;
 
     const role = room.owner === data.username ? 'owner' : room.admins.has(data.username) ? 'admin' : 'member';
-    cb({ success: true, room: { name: room.name, code, role, backgroundUrl: room.backgroundUrl, burnerMode: room.burnerMode, tags: room.tags || [], announcementOnly: room.announcementOnly || false }, messages: messages.get(code) || [] });
+    cb({ success: true, room: { name: room.name, code, role, backgroundUrl: room.backgroundUrl, burnerMode: room.burnerMode, tags: room.tags || [], announcementOnly: room.announcementOnly || false, pinnedMessageId: room.pinnedMessageId || null }, messages: messages.get(code) || [] });
 
-    io.to(code).emit('room-update', { roomCode: code, members: getRoomMembers(code), backgroundUrl: room.backgroundUrl });
+    io.to(code).emit('room-update', { roomCode: code, members: getRoomMembers(code), backgroundUrl: room.backgroundUrl, pinnedMessageId: room.pinnedMessageId });
     if (!isRejoining) emitSystem(code, `${data.username} joined the room`);
   });
 
@@ -379,6 +380,95 @@ io.on('connection', (socket) => {
   // ── Ping / Signal Test ──
   socket.on('ping-test', (_, cb) => {
     cb?.({ success: true, serverTime: Date.now() });
+  });
+
+  // ── Message Actions (Edit, Delete, Pin, Highlight) ──
+  socket.on('edit-message', ({ roomCode, messageId, newText }, cb) => {
+    const data = socketData.get(socket.id);
+    if (!data?.username) return cb?.({ error: 'Not authenticated.' });
+    const roomMsgs = messages.get(roomCode);
+    if (!roomMsgs) return cb?.({ error: 'Room not found.' });
+    
+    const msg = roomMsgs.find(m => m.id === messageId);
+    if (!msg) return cb?.({ error: 'Message not found.' });
+    if (msg.sender !== data.username) return cb?.({ error: 'You can only edit your own messages.' });
+
+    let clean = filterProfanity(sanitize(newText));
+    if (!clean) return cb?.({ error: 'Empty message not allowed.' });
+
+    msg.text = clean;
+    msg.isEdited = true;
+    io.to(roomCode).emit('message-updated', { roomCode, messageId, updates: { text: clean, isEdited: true } });
+    cb?.({ success: true });
+  });
+
+  socket.on('delete-message', ({ roomCode, messageId }, cb) => {
+    const data = socketData.get(socket.id);
+    if (!data?.username) return cb?.({ error: 'Not authenticated.' });
+    const room = rooms.get(roomCode);
+    const roomMsgs = messages.get(roomCode);
+    if (!room || !roomMsgs) return cb?.({ error: 'Room not found.' });
+
+    const msgIndex = roomMsgs.findIndex(m => m.id === messageId);
+    if (msgIndex === -1) return cb?.({ error: 'Message not found.' });
+    const msg = roomMsgs[msgIndex];
+
+    const isOwner = room.owner === data.username;
+    const isAdmin = room.admins.has(data.username);
+    
+    // Allow deleting if it's their own message, or if they're admin/owner
+    if (msg.sender !== data.username && !isOwner && !isAdmin) {
+      return cb?.({ error: 'Not authorized to delete this message.' });
+    }
+
+    roomMsgs.splice(msgIndex, 1);
+    io.to(roomCode).emit('message-deleted', { roomCode, messageId });
+    if (room.pinnedMessageId === messageId) {
+      room.pinnedMessageId = null;
+      io.to(roomCode).emit('room-update', { roomCode, members: getRoomMembers(roomCode), backgroundUrl: room.backgroundUrl, pinnedMessageId: null });
+    }
+    cb?.({ success: true });
+  });
+
+  socket.on('pin-message', ({ roomCode, messageId }, cb) => {
+    const data = socketData.get(socket.id);
+    if (!data?.username) return cb?.({ error: 'Not authenticated.' });
+    const room = rooms.get(roomCode);
+    if (!room) return cb?.({ error: 'Room not found.' });
+
+    const isOwner = room.owner === data.username;
+    const isAdmin = room.admins.has(data.username);
+    if (!isOwner && !isAdmin) return cb?.({ error: 'Only admins can pin messages.' });
+
+    // If messageId is sent, pin it. If not, unpin.
+    // If it's already pinned, unpin it.
+    if (room.pinnedMessageId === messageId) {
+      room.pinnedMessageId = null;
+    } else {
+      room.pinnedMessageId = messageId || null;
+    }
+
+    io.to(roomCode).emit('room-update', { roomCode, members: getRoomMembers(roomCode), backgroundUrl: room.backgroundUrl, pinnedMessageId: room.pinnedMessageId });
+    cb?.({ success: true, pinnedMessageId: room.pinnedMessageId });
+  });
+
+  socket.on('highlight-message', ({ roomCode, messageId }, cb) => {
+    const data = socketData.get(socket.id);
+    if (!data?.username) return cb?.({ error: 'Not authenticated.' });
+    const room = rooms.get(roomCode);
+    const roomMsgs = messages.get(roomCode);
+    if (!room || !roomMsgs) return cb?.({ error: 'Room not found.' });
+
+    const isOwner = room.owner === data.username;
+    const isAdmin = room.admins.has(data.username);
+    if (!isOwner && !isAdmin) return cb?.({ error: 'Only admins can highlight messages.' });
+
+    const msg = roomMsgs.find(m => m.id === messageId);
+    if (!msg) return cb?.({ error: 'Message not found.' });
+
+    msg.isHighlighted = !msg.isHighlighted;
+    io.to(roomCode).emit('message-updated', { roomCode, messageId, updates: { isHighlighted: msg.isHighlighted } });
+    cb?.({ success: true, isHighlighted: msg.isHighlighted });
   });
 
   // ── Reactions ──
