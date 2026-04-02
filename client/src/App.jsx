@@ -154,8 +154,8 @@ export default function App() {
     });
   };
 
-  const handleCreateRoom = (roomName) => {
-    socketRef.current?.emit('create-room', { roomName }, (res) => {
+  const handleCreateRoom = (roomName, isPublic = false) => {
+    socketRef.current?.emit('create-room', { roomName, isPublic }, (res) => {
       if (res?.error) return showToast(res.error, 'error');
       setRooms(prev => [...prev, res.room]);
       setMessagesByRoom(prev => ({ ...prev, [res.room.code]: res.messages || [] }));
@@ -274,6 +274,7 @@ export default function App() {
           onLogin={handleLogin}
           onCreateRoom={handleCreateRoom}
           onJoinRoom={handleJoinRoom}
+          socket={socketRef.current}
         />
       ) : (
         <Chat

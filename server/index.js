@@ -161,7 +161,7 @@ io.on('connection', (socket) => {
     cb({ success: true, username: clean });
   });
 
-  socket.on('create-room', ({ roomName }, cb) => {
+  socket.on('create-room', ({ roomName, isPublic }, cb) => {
     const data = socketData.get(socket.id);
     if (!data?.username) return cb({ error: 'Set username first.' });
     const name = sanitize(roomName);
@@ -169,6 +169,8 @@ io.on('connection', (socket) => {
 
     let code = generateCode();
     while (rooms.has(code)) code = generateCode();
+
+    const visibility = isPublic ? 'public' : 'private';
 
     rooms.set(code, {
       name, code, owner: data.username,
@@ -178,13 +180,35 @@ io.on('connection', (socket) => {
       totalMessages: 0,
       messageCounts: new Map([[data.username, 0]]),
       backgroundUrl: null,
+      visibility,
     });
     messages.set(code, []);
     data.rooms.add(code);
     socket.join(code);
 
-    cb({ success: true, room: { name, code, role: 'owner', backgroundUrl: null }, messages: [] });
+    cb({ success: true, room: { name, code, role: 'owner', backgroundUrl: null, visibility }, messages: [] });
     io.to(code).emit('room-update', { roomCode: code, members: getRoomMembers(code), backgroundUrl: null });
+  });
+
+  // ── List public rooms ──
+  socket.on('list-public-rooms', (_, cb) => {
+    const publicRooms = [];
+    for (const [code, room] of rooms.entries()) {
+      if (room.visibility === 'public') {
+        const onlineCount = Array.from(room.members.values()).filter(m => m.online).length;
+        publicRooms.push({
+          code,
+          name: room.name,
+          owner: room.owner,
+          memberCount: room.members.size,
+          onlineCount,
+          createdAt: room.createdAt,
+        });
+      }
+    }
+    // Sort by online count descending
+    publicRooms.sort((a, b) => b.onlineCount - a.onlineCount);
+    cb({ success: true, rooms: publicRooms });
   });
 
   socket.on('join-room', ({ roomCode }, cb) => {
