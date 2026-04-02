@@ -179,8 +179,8 @@ export default function App() {
     });
   };
 
-  const handleCreateRoom = (roomName, isPublic = false, pin = null, tags = []) => {
-    socketRef.current?.emit('create-room', { roomName, isPublic, pin, tags }, (res) => {
+  const handleCreateRoom = (roomName, isPublic = false, pin = null, tags = [], announcementOnly = false) => {
+    socketRef.current?.emit('create-room', { roomName, isPublic, pin, tags, announcementOnly }, (res) => {
       if (res?.error) return showToast(res.error, 'error');
       setRooms(prev => [...prev, res.room]);
       setMessagesByRoom(prev => ({ ...prev, [res.room.code]: res.messages || [] }));
@@ -223,8 +223,29 @@ export default function App() {
 
   const handleSendMessage = (text) => {
     if (!activeRoom) return;
-    socketRef.current?.emit('send-message', { roomCode: activeRoom, text }, (res) => {
+    // Return a promise so MessageArea can track delivery
+    return new Promise((resolve) => {
+      socketRef.current?.emit('send-message', { roomCode: activeRoom, text }, (res) => {
+        if (res?.error) { showToast(res.error, 'error'); resolve(false); }
+        else resolve(res.delivered || false);
+      });
+    });
+  };
+
+  const handleSetColor = (color) => {
+    socketRef.current?.emit('set-color', { color }, (res) => {
       if (res?.error) showToast(res.error, 'error');
+      else showToast(`Name color set to ${res.color}!`, 'success');
+    });
+  };
+
+  const handlePingTest = () => {
+    return new Promise((resolve) => {
+      const start = Date.now();
+      socketRef.current?.emit('ping-test', {}, (res) => {
+        const latency = Date.now() - start;
+        resolve(latency);
+      });
     });
   };
 
@@ -348,6 +369,9 @@ export default function App() {
           onSetBackground={handleSetBackground}
           onReaction={handleReaction}
           onToggleBurner={handleToggleBurner}
+          onSetColor={handleSetColor}
+          onPingTest={handlePingTest}
+          socket={socketRef.current}
           sidebarOpen={sidebarOpen}
           onToggleSidebar={setSidebarOpen}
         />

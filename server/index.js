@@ -25,6 +25,9 @@ const messages = new Map();
 const socketData = new Map();
 const rateLimits = new Map();
 const userTokens = new Map();  // token -> { username, createdAt }
+const userColors = new Map();  // username -> color string
+
+const ALLOWED_COLORS = ['red','orange','amber','yellow','lime','green','emerald','teal','cyan','sky','blue','indigo','violet','purple','fuchsia','pink','rose'];
 
 const MAX_MESSAGES = 100;
 const RATE_WINDOW = 3000;
@@ -82,6 +85,7 @@ function getRoomMembers(code) {
     username,
     role: room.owner === username ? 'owner' : room.admins.has(username) ? 'admin' : 'member',
     online: d.online,
+    nameColor: userColors.get(username) || null,
   }));
 }
 
@@ -172,12 +176,6 @@ io.on('connection', (socket) => {
     const clean = sanitize(username);
     if (!/^[A-Za-z0-9]{2,20}$/.test(clean)) return cb({ error: 'Username must be 2-20 alphanumeric characters, no spaces or symbols.' });
     
-    for (let [id, sData] of socketData.entries()) {
-      if (id !== socket.id && sData.username?.toLowerCase() === clean.toLowerCase()) {
-        return cb({ error: 'Username is already taken.' });
-      }
-    }
-    
     socketData.get(socket.id).username = clean;
 
     // Generate a persistent token
@@ -196,12 +194,6 @@ io.on('connection', (socket) => {
     
     if (clean.toLowerCase() === data.username.toLowerCase() && clean !== data.username) {
         // just a case change, which is fine
-    } else {
-      for (let [id, sData] of socketData.entries()) {
-        if (id !== socket.id && sData.username?.toLowerCase() === clean.toLowerCase()) {
-          return cb({ error: 'Username is already taken.' });
-        }
-      }
     }
     
     const oldName = data.username;
@@ -244,7 +236,7 @@ io.on('connection', (socket) => {
     cb({ success: true, username: clean });
   });
 
-  socket.on('create-room', ({ roomName, isPublic, pin, tags }, cb) => {
+  socket.on('create-room', ({ roomName, isPublic, pin, tags, announcementOnly }, cb) => {
     const data = socketData.get(socket.id);
     if (!data?.username) return cb({ error: 'Set username first.' });
     const name = sanitize(roomName);
@@ -270,12 +262,13 @@ io.on('connection', (socket) => {
       tags: roomTags,
       burnerMode: false,
       peakOnline: 1,
+      announcementOnly: !!announcementOnly,
     });
     messages.set(code, []);
     data.rooms.add(code);
     socket.join(code);
 
-    cb({ success: true, room: { name, code, role: 'owner', backgroundUrl: null, visibility, hasPin: !!roomPin, tags: roomTags, burnerMode: false }, messages: [] });
+    cb({ success: true, room: { name, code, role: 'owner', backgroundUrl: null, visibility, hasPin: !!roomPin, tags: roomTags, burnerMode: false, announcementOnly: !!announcementOnly }, messages: [] });
     io.to(code).emit('room-update', { roomCode: code, members: getRoomMembers(code), backgroundUrl: null });
   });
 
@@ -325,7 +318,7 @@ io.on('connection', (socket) => {
     if (currentOnline > (room.peakOnline || 0)) room.peakOnline = currentOnline;
 
     const role = room.owner === data.username ? 'owner' : room.admins.has(data.username) ? 'admin' : 'member';
-    cb({ success: true, room: { name: room.name, code, role, backgroundUrl: room.backgroundUrl, burnerMode: room.burnerMode, tags: room.tags || [] }, messages: messages.get(code) || [] });
+    cb({ success: true, room: { name: room.name, code, role, backgroundUrl: room.backgroundUrl, burnerMode: room.burnerMode, tags: room.tags || [], announcementOnly: room.announcementOnly || false }, messages: messages.get(code) || [] });
 
     io.to(code).emit('room-update', { roomCode: code, members: getRoomMembers(code), backgroundUrl: room.backgroundUrl });
     if (!isRejoining) emitSystem(code, `${data.username} joined the room`);
@@ -339,13 +332,21 @@ io.on('connection', (socket) => {
     const room = rooms.get(roomCode);
     if (!room || !room.members.has(data.username)) return cb?.({ error: 'Not in this room.' });
 
+    // Announcement mode: only owner/admins can send
+    if (room.announcementOnly) {
+      const isOwner = room.owner === data.username;
+      const isAdmin = room.admins.has(data.username);
+      if (!isOwner && !isAdmin) return cb?.({ error: 'Only admins can send messages in announcement rooms.' });
+    }
+
     let clean = sanitize(text);
     if (!clean) return cb?.({ error: 'Empty message.' });
 
     // Apply profanity filter
     clean = filterProfanity(clean);
 
-    const msg = { id: uuidv4(), sender: data.username, text: clean, timestamp: Date.now(), type: 'user', roomCode, reactions: {} };
+    const senderColor = userColors.get(data.username) || null;
+    const msg = { id: uuidv4(), sender: data.username, text: clean, timestamp: Date.now(), type: 'user', roomCode, reactions: {}, senderColor };
     const roomMsgs = messages.get(roomCode);
     roomMsgs.push(msg);
     if (roomMsgs.length > MAX_MESSAGES) roomMsgs.shift();
@@ -356,7 +357,28 @@ io.on('connection', (socket) => {
     data.lastActive = Date.now();
 
     io.to(roomCode).emit('new-message', msg);
-    cb?.({ success: true });
+    cb?.({ success: true, delivered: true });
+  });
+
+  // ── Set Username Color ──
+  socket.on('set-color', ({ color }, cb) => {
+    const data = socketData.get(socket.id);
+    if (!data?.username) return cb?.({ error: 'Not authenticated.' });
+    if (!ALLOWED_COLORS.includes(color)) return cb?.({ error: `Invalid color. Choose from: ${ALLOWED_COLORS.join(', ')}` });
+    userColors.set(data.username, color);
+    // Update all rooms this user is in
+    for (const code of data.rooms) {
+      const room = rooms.get(code);
+      if (room) {
+        io.to(code).emit('room-update', { roomCode: code, members: getRoomMembers(code), backgroundUrl: room.backgroundUrl });
+      }
+    }
+    cb?.({ success: true, color });
+  });
+
+  // ── Ping / Signal Test ──
+  socket.on('ping-test', (_, cb) => {
+    cb?.({ success: true, serverTime: Date.now() });
   });
 
   // ── Reactions ──

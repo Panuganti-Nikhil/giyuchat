@@ -14,6 +14,7 @@ export default function Chat({
   onKick, onPromote, onDemote, onTransferOwnership,
   onChangeUsername, onSignOut, onSetBackground,
   onReaction, onToggleBurner,
+  onSetColor, onPingTest, socket,
   sidebarOpen, onToggleSidebar,
 }) {
   const { isDark } = useTheme();
@@ -79,6 +80,9 @@ export default function Chat({
                 onKick={onKick}
                 onPromote={onPromote}
                 onReaction={onReaction}
+                onSetColor={onSetColor}
+                onPingTest={onPingTest}
+                announcementOnly={currentRoom.announcementOnly}
               />
             </div>
 

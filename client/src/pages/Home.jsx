@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MessageCircle, Plus, LogIn, Sparkles, ArrowRight, Globe, Key, Users, Clock, ArrowLeft, Search, RefreshCw, Lock, Tag, Shield } from 'lucide-react';
+import { MessageCircle, Plus, LogIn, Sparkles, ArrowRight, Globe, Key, Users, Clock, ArrowLeft, Search, RefreshCw, Lock, Tag, Shield, Megaphone } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
 const TAG_OPTIONS = ['Gaming', 'Study', 'Emergency', 'Chill', 'Work', 'Music', 'Anime', 'Tech'];
@@ -13,6 +13,7 @@ export default function Home({ onLogin, onCreateRoom, onJoinRoom, username, isAu
   const [pinEnabled, setPinEnabled] = useState(false);
   const [pin, setPin] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
+  const [announcementOnly, setAnnouncementOnly] = useState(false);
   const [error, setError] = useState('');
   const [tab, setTab] = useState('create');
   const [joinMode, setJoinMode] = useState(null);
@@ -33,10 +34,11 @@ export default function Home({ onLogin, onCreateRoom, onJoinRoom, username, isAu
     if (!roomName.trim()) return setError('Enter a room name');
     if (pinEnabled && !/^\d{4}$/.test(pin)) return setError('PIN must be exactly 4 digits');
     setError('');
-    onCreateRoom(roomName.trim(), isPublic, pinEnabled ? pin : null, selectedTags);
+    onCreateRoom(roomName.trim(), isPublic, pinEnabled ? pin : null, selectedTags, announcementOnly);
     setRoomName('');
     setPin('');
     setSelectedTags([]);
+    setAnnouncementOnly(false);
   };
 
   const handleJoin = () => {
@@ -263,6 +265,18 @@ export default function Home({ onLogin, onCreateRoom, onJoinRoom, username, isAu
                           ? pinEnabled ? '🔐 Listed publicly but requires PIN to enter' : '🌐 Anyone can find and join this room'
                           : '🔒 Only people with the code can join'}
                       </p>
+
+                      {/* Announcement Room Toggle */}
+                      <div className={`flex items-center justify-between px-3 py-2 rounded-xl ${announcementOnly ? 'bg-blue-500/10 border border-blue-500/20' : isDark ? 'bg-white/5' : 'bg-black/5'}`}>
+                        <div className="flex items-center gap-2">
+                          <Megaphone className={`w-4 h-4 ${announcementOnly ? 'text-blue-400' : isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+                          <span className={`text-sm ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>Announcement Only</span>
+                        </div>
+                        <button onClick={() => setAnnouncementOnly(!announcementOnly)}
+                          className={`w-10 h-5 rounded-full flex items-center transition-all ${announcementOnly ? 'bg-blue-500 justify-end' : isDark ? 'bg-white/10 justify-start' : 'bg-black/10 justify-start'}`}>
+                          <div className="w-4 h-4 bg-white rounded-full mx-0.5 shadow" />
+                        </button>
+                      </div>
 
                       <button id="create-room-btn" onClick={handleCreate}
                         className="w-full py-3 rounded-xl gradient-btn text-white font-semibold flex items-center justify-center gap-2">
