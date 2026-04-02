@@ -15,8 +15,8 @@ app.use(express.json());
 
 const io = new Server(server, {
   cors: { origin: '*', methods: ['GET', 'POST'] },
-  pingInterval: 10000,
-  pingTimeout: 5000,
+  pingInterval: 25000,
+  pingTimeout: 60000,
 });
 
 // ── In-Memory Stores ──

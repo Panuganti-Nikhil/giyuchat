@@ -185,7 +185,14 @@ export default function MessageArea({ messages, username, typingUsers, onSendMes
       {/* Emoji picker */}
       {showEmoji && (
         <div className="absolute bottom-16 left-0 right-0 sm:right-auto sm:left-4 z-20 animate-fade-in flex justify-center w-full sm:w-auto">
-          <EmojiPicker onEmojiClick={handleEmoji} theme={isDark ? 'dark' : 'light'} lazyLoadEmojis height={350} width={320} />
+          <EmojiPicker 
+            onEmojiClick={handleEmoji} 
+            theme={isDark ? 'dark' : 'light'} 
+            emojiStyle="native"
+            lazyLoadEmojis={false}
+            height={350} 
+            width={320} 
+          />
         </div>
       )}
 
