@@ -2,188 +2,362 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ══════════════════════════════════════════════════════
+   GIYU CHAT — Radioactive Neon Cyberpunk Theme
+   ══════════════════════════════════════════════════════ */
+
+:root {
+  --bg-void: #0B0616;
+  --bg-deep: #0F0A1F;
+  --bg-surface: #150D28;
+  --bg-elevated: #1C1233;
+  --neon-purple: #A100FF;
+  --neon-pink: #FF00C8;
+  --neon-accent: #FF4DFF;
+  --neon-blue: #00D4FF;
+  --text-primary: #F5E9FF;
+  --text-secondary: #BFA6D9;
+  --text-muted: #7B5EA0;
+  --gradient-neon: linear-gradient(135deg, #A100FF 0%, #FF00C8 100%);
+  --gradient-neon-vertical: linear-gradient(180deg, #A100FF 0%, #FF00C8 100%);
+  --gradient-neon-soft: linear-gradient(135deg, rgba(161, 0, 255, 0.15) 0%, rgba(255, 0, 200, 0.15) 100%);
+  --glow-sm: 0 0 10px rgba(161, 0, 255, 0.2);
+  --glow-md: 0 0 20px rgba(161, 0, 255, 0.3), 0 0 40px rgba(255, 0, 200, 0.1);
+  --glow-lg: 0 0 30px rgba(161, 0, 255, 0.4), 0 0 60px rgba(255, 0, 200, 0.15);
+  --glow-pink: 0 0 20px rgba(255, 0, 200, 0.3);
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow: hidden;
-  height: 100vh;
+  height: 100dvh;
+  background: var(--bg-void);
+  color: var(--text-primary);
 }
 
-#root { height: 100vh; }
+#root { height: 100dvh; }
 
-/* ── Premium High-Contrast Grid Background ── */
+/* ── Animated Deep-Space Backgrounds ── */
 .bg-app-dark {
-  background-color: #030303;
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 24px 24px;
-}
-.bg-app-light {
-  background-color: #ffffff;
-  background-image: 
-    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-color: var(--bg-void);
+  background-image:
+    radial-gradient(ellipse at 15% 50%, rgba(161, 0, 255, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 20%, rgba(255, 0, 200, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 90%, rgba(161, 0, 255, 0.04) 0%, transparent 50%);
 }
 
-/* ── Flat, Sharp Panels ── */
+.bg-app-light {
+  background-color: #0E0820;
+  background-image:
+    radial-gradient(ellipse at 15% 50%, rgba(161, 0, 255, 0.09) 0%, transparent 50%),
+    radial-gradient(ellipse at 85% 20%, rgba(255, 0, 200, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 90%, rgba(161, 0, 255, 0.05) 0%, transparent 50%);
+}
+
+/* ── Glassmorphism Panels (Rounded — for Chat UI) ── */
 .glass {
-  background: rgba(10, 10, 10, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0 !important;
+  background: rgba(15, 10, 32, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(161, 0, 255, 0.12);
+  border-radius: 16px;
 }
+
 .glass-light {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(20, 14, 40, 0.8);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(161, 0, 255, 0.15);
+  border-radius: 16px;
+}
+
+/* ── Sharp Glass — for Home page only ── */
+.glass-sharp {
+  background: rgba(15, 10, 32, 0.8);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(161, 0, 255, 0.12);
   border-radius: 0 !important;
 }
-.glass-hover:hover {
-  background: rgba(255, 255, 255, 0.05);
+
+.glass-sharp-light {
+  background: rgba(20, 14, 40, 0.85);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(161, 0, 255, 0.15);
+  border-radius: 0 !important;
 }
-.light .glass-hover:hover {
-  background: rgba(0, 0, 0, 0.03);
+
+/* Hover states */
+.glass-hover:hover {
+  background: rgba(161, 0, 255, 0.08);
+  border-color: rgba(161, 0, 255, 0.2);
 }
 
 .glass-active {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(161, 0, 255, 0.12);
+  border: 1px solid rgba(161, 0, 255, 0.3);
+  box-shadow: var(--glow-sm);
+  border-radius: 12px;
 }
+
 .light .glass-active {
-  background: rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: rgba(161, 0, 255, 0.15);
+  border: 1px solid rgba(161, 0, 255, 0.35);
+  box-shadow: var(--glow-sm);
 }
 
-/* ── Sharp Scrollbar ── */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 0; border: 1px solid transparent; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
-.light ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.1); }
-.light ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
+/* ── Neon Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: rgba(11, 6, 22, 0.5); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--neon-purple), var(--neon-pink));
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #B733FF, #FF33D4);
+  box-shadow: 0 0 8px rgba(161, 0, 255, 0.5);
+}
+.light ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--neon-purple), var(--neon-pink));
+}
+.light ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #B733FF, #FF33D4);
+}
 
-/* ── Custom High-End Classes ── */
+/* ── Premium Gradient Text ── */
 .premium-text {
-  color: #fff;
+  background: var(--gradient-neon);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   font-weight: 700;
   letter-spacing: -0.02em;
+  filter: drop-shadow(0 0 12px rgba(161, 0, 255, 0.4));
 }
 .light .premium-text {
-  color: #000;
+  background: var(--gradient-neon);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 12px rgba(161, 0, 255, 0.5));
 }
 
+/* ── Neon Gradient Button ── */
 .premium-btn {
-  background: #ffffff;
-  color: #000000;
-  border: 1px solid #ffffff;
-  transition: all 0.2s ease;
-  border-radius: 0 !important;
+  background: var(--gradient-neon);
+  color: #ffffff !important;
+  border: none;
+  border-radius: 12px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 600;
   letter-spacing: -0.01em;
+  box-shadow: 0 0 15px rgba(161, 0, 255, 0.3), 0 0 30px rgba(255, 0, 200, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+.premium-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 .premium-btn:hover {
-  background: transparent;
-  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 0 25px rgba(161, 0, 255, 0.5), 0 0 50px rgba(255, 0, 200, 0.2), 0 4px 15px rgba(0, 0, 0, 0.3);
 }
+.premium-btn:hover::before { opacity: 1; }
+.premium-btn:active { transform: translateY(0px); }
 
 .light .premium-btn {
-  background: #000000;
-  color: #ffffff;
-  border-color: #000000;
+  background: var(--gradient-neon);
+  color: #ffffff !important;
+  box-shadow: 0 0 15px rgba(161, 0, 255, 0.35);
 }
 .light .premium-btn:hover {
-  background: transparent;
-  color: #000000;
+  box-shadow: 0 0 25px rgba(161, 0, 255, 0.5), 0 0 50px rgba(255, 0, 200, 0.25);
 }
 
-/* ── Minimalist Sharp Messages ── */
-.message-sent {
-  background: #ffffff !important;
-  color: #000000 !important;
+/* ── Home page: Sharp edges override ── */
+.home-sharp .premium-btn {
   border-radius: 0 !important;
-  border: 1px solid #ffffff !important;
+}
+.home-sharp input {
+  border-radius: 0 !important;
+}
+.home-sharp button {
+  border-radius: 0 !important;
+}
+
+/* ── Chat Bubbles — Cyberpunk Neon ── */
+.message-sent {
+  background: var(--gradient-neon) !important;
+  color: #ffffff !important;
+  border-radius: 18px 18px 4px 18px !important;
+  border: none !important;
+  box-shadow: 0 0 18px rgba(161, 0, 255, 0.25), 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 .light .message-sent {
-  background: #000000 !important;
+  background: var(--gradient-neon) !important;
   color: #ffffff !important;
-  border-color: #000000 !important;
+  border: none !important;
+  box-shadow: 0 0 20px rgba(161, 0, 255, 0.3);
 }
 
 .message-received {
-  background: transparent !important;
-  border-radius: 0 !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  background: rgba(15, 10, 32, 0.65) !important;
+  border-radius: 18px 18px 18px 4px !important;
+  border: 1px solid rgba(161, 0, 255, 0.15) !important;
+  box-shadow: 0 0 10px rgba(161, 0, 255, 0.06), 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 .light .message-received {
-  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  background: rgba(20, 14, 42, 0.7) !important;
+  border: 1px solid rgba(161, 0, 255, 0.2) !important;
 }
 
-/* ── Input Areas ── */
+/* ── Input fields ── */
 input {
-  border-radius: 0 !important;
+  border-radius: 12px !important;
 }
 button {
-  border-radius: 0 !important;
+  border-radius: 12px !important;
+}
+input:focus {
+  border-color: rgba(161, 0, 255, 0.5) !important;
+  box-shadow: 0 0 15px rgba(161, 0, 255, 0.15), inset 0 0 8px rgba(161, 0, 255, 0.04) !important;
 }
 
-/* ── Typing dots animation ── */
+/* ── Typing Dots — Neon Pulse ── */
 .typing-dot {
-  animation: typingPulse 1.4s ease-in-out infinite;
-  border-radius: 0 !important;
+  animation: neonPulse 1.4s ease-in-out infinite;
+  border-radius: 50% !important;
+  background: var(--neon-purple) !important;
+  box-shadow: 0 0 6px var(--neon-purple);
 }
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+  background: var(--neon-accent) !important;
+  box-shadow: 0 0 6px var(--neon-accent);
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+  background: var(--neon-pink) !important;
+  box-shadow: 0 0 6px var(--neon-pink);
+}
 
-@keyframes typingPulse {
+@keyframes neonPulse {
   0%, 60%, 100% { opacity: 0.3; transform: scale(1); }
-  30% { opacity: 1; transform: scale(1.2); }
+  30% { opacity: 1; transform: scale(1.4); }
 }
 
-/* ── Sharp Orbs (Square elements instead of rounded glows) ── */
-@keyframes glow {
-  0%, 100% { opacity: 0.03; }
-  50% { opacity: 0.06; }
-}
-.animate-glow { animation: glow 4s ease-in-out infinite; border-radius: 0; }
-.animate-glow-delayed { animation: glow 4s ease-in-out infinite 2s; border-radius: 0; }
-
-/* ── Emoji picker override ── */
-.EmojiPickerReact {
-  --epr-bg-color: #0a0a0a !important;
-  --epr-category-label-bg-color: #0a0a0a !important;
-  --epr-hover-bg-color: rgba(255, 255, 255, 0.1) !important;
-  --epr-search-input-bg-color: rgba(255, 255, 255, 0.05) !important;
-  --epr-text-color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 0 !important;
+/* ── Floating Neon Orbs ── */
+@keyframes orbFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.06; }
+  25% { transform: translate(40px, -30px) scale(1.08); opacity: 0.10; }
+  50% { transform: translate(-20px, 25px) scale(0.95); opacity: 0.07; }
+  75% { transform: translate(15px, -15px) scale(1.03); opacity: 0.08; }
 }
 
-.light .EmojiPickerReact {
-  --epr-bg-color: #ffffff !important;
-  --epr-category-label-bg-color: #ffffff !important;
-  --epr-hover-bg-color: rgba(0, 0, 0, 0.05) !important;
-  --epr-search-input-bg-color: rgba(0, 0, 0, 0.03) !important;
-  --epr-text-color: #000000 !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+.animate-glow {
+  animation: orbFloat 10s ease-in-out infinite;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--neon-purple), transparent 70%) !important;
+}
+.animate-glow-delayed {
+  animation: orbFloat 10s ease-in-out infinite 4s;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--neon-pink), transparent 70%) !important;
 }
 
-/* ── Sharp Toast notification ── */
-.toast > div {
-  border-radius: 0 !important;
-}
-.toast {
-  animation: toastIn 0.3s ease-out, toastOut 0.3s ease-in 2.7s forwards;
-}
-@keyframes toastIn {
-  from { opacity: 0; transform: translateY(20px); }
+/* ── Animations ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+.animate-fade-in {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up {
+  animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Glow Pulse (for send button / accents) ── */
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(161, 0, 255, 0.3), 0 0 24px rgba(255, 0, 200, 0.1); }
+  50% { box-shadow: 0 0 22px rgba(161, 0, 255, 0.5), 0 0 44px rgba(255, 0, 200, 0.2); }
+}
+.glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+/* ── Online indicator pulse ── */
+@keyframes neonDotPulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(0, 255, 120, 0.4); }
+  50% { box-shadow: 0 0 10px rgba(0, 255, 120, 0.7), 0 0 20px rgba(0, 255, 120, 0.3); }
+}
+.neon-online-dot {
+  background: #00FF78;
+  border-radius: 50%;
+  animation: neonDotPulse 2s ease-in-out infinite;
+}
+
+/* ── Emoji Picker — Cyberpunk Override ── */
+.EmojiPickerReact {
+  --epr-bg-color: var(--bg-surface) !important;
+  --epr-category-label-bg-color: var(--bg-surface) !important;
+  --epr-hover-bg-color: rgba(161, 0, 255, 0.15) !important;
+  --epr-search-input-bg-color: rgba(161, 0, 255, 0.08) !important;
+  --epr-text-color: var(--text-primary) !important;
+  border: 1px solid rgba(161, 0, 255, 0.15) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--glow-md) !important;
+}
+.light .EmojiPickerReact {
+  --epr-bg-color: var(--bg-surface) !important;
+  --epr-category-label-bg-color: var(--bg-surface) !important;
+  --epr-hover-bg-color: rgba(161, 0, 255, 0.15) !important;
+  --epr-search-input-bg-color: rgba(161, 0, 255, 0.08) !important;
+  --epr-text-color: var(--text-primary) !important;
+  border: 1px solid rgba(161, 0, 255, 0.2) !important;
+  border-radius: 16px !important;
+}
+
+/* ── Toast Notification — Neon ── */
+.toast > div {
+  border-radius: 14px !important;
+}
+.toast {
+  animation: toastIn 0.35s ease-out, toastOut 0.35s ease-in 2.65s forwards;
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 @keyframes toastOut {
-  from { opacity: 1; transform: translateY(0); }
-  to { opacity: 0; transform: translateY(-20px); }
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(-20px) scale(0.9); }
+}
+
+/* ── Selection Color ── */
+::selection {
+  background: rgba(161, 0, 255, 0.3);
+  color: #ffffff;
+}
+
+/* ── Subtle border glow on hover for cards ── */
+.neon-card-hover {
+  transition: all 0.3s ease;
+}
+.neon-card-hover:hover {
+  border-color: rgba(161, 0, 255, 0.3) !important;
+  box-shadow: 0 0 12px rgba(161, 0, 255, 0.1), 0 0 24px rgba(255, 0, 200, 0.05);
 }

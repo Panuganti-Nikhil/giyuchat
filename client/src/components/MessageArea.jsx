@@ -29,11 +29,11 @@ function renderMessageText(text, isDark, members) {
       if (match[1]) tokens.push(<strong key={`b${match.index}`} className="font-bold">{match[2]}</strong>);
       else if (match[3]) tokens.push(<em key={`i${match.index}`} className="italic">{match[4]}</em>);
       else if (match[5]) tokens.push(<em key={`u${match.index}`} className="italic">{match[6]}</em>);
-      else if (match[7]) tokens.push(<code key={`c${match.index}`} className={`px-1.5 py-0.5  text-xs font-mono ${isDark ? 'bg-white/10 text-emerald-400' : 'bg-black/10 text-emerald-600'}`}>{match[8]}</code>);
+      else if (match[7]) tokens.push(<code key={`c${match.index}`} className="px-1.5 py-0.5 rounded-md text-xs font-mono bg-[#A100FF]/15 text-[#FF4DFF]">{match[8]}</code>);
       else if (match[9]) {
         const mentionName = match[10];
         const isMember = memberNames.some(n => n.toLowerCase() === mentionName.toLowerCase());
-        tokens.push(<span key={`m${match.index}`} className={`font-semibold ${isMember ? 'text-cyan-400 bg-cyan-400/10 px-1 ' : isDark ? 'text-violet-400' : 'text-violet-600'}`}>@{mentionName}</span>);
+        tokens.push(<span key={`m${match.index}`} className={`font-semibold ${isMember ? 'text-[#FF00C8] bg-[#FF00C8]/10 px-1 rounded-md' : 'text-[#A100FF]'}`}>@{mentionName}</span>);
       }
       lastIndex = match.index + match[0].length;
     }
@@ -50,7 +50,7 @@ function renderMessageText(text, isDark, members) {
     for (const img of imageMatch) {
       const idx = remaining.indexOf(img, lastIdx);
       if (idx > lastIdx) parts.push(<span key={key++}>{processInline(remaining.slice(lastIdx, idx))}</span>);
-      parts.push(<img key={key++} src={img} alt="shared" loading="lazy" className="max-w-[250px] max-h-[200px]  mt-1 object-cover cursor-pointer hover:opacity-80 transition-opacity" onClick={() => window.open(img, '_blank')} onError={(e) => { e.target.style.display = 'none'; }} />);
+      parts.push(<img key={key++} src={img} alt="shared" loading="lazy" className="max-w-[250px] max-h-[200px] rounded-xl mt-1 object-cover cursor-pointer hover:opacity-80 transition-opacity" onClick={() => window.open(img, '_blank')} onError={(e) => { e.target.style.display = 'none'; }} />);
       lastIdx = idx + img.length;
     }
     if (lastIdx < remaining.length) parts.push(<span key={lastIdx}>{processInline(remaining.slice(lastIdx))}</span>);
@@ -66,7 +66,7 @@ function renderMessageText(text, isDark, members) {
     for (const link of linkMatch) {
       const idx = remaining.indexOf(link, lastIdx);
       if (idx > lastIdx) parts.push(<span key={key++}>{processInline(remaining.slice(lastIdx, idx))}</span>);
-      parts.push(<a key={key++} href={link} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline hover:text-blue-300 break-all">{link.length > 50 ? link.slice(0, 47) + '...' : link}</a>);
+      parts.push(<a key={key++} href={link} target="_blank" rel="noopener noreferrer" className="text-[#FF4DFF] underline hover:text-[#FF00C8] break-all transition-colors">{link.length > 50 ? link.slice(0, 47) + '...' : link}</a>);
       lastIdx = idx + link.length;
     }
     if (lastIdx < remaining.length) parts.push(<span key={lastIdx}>{processInline(remaining.slice(lastIdx))}</span>);
@@ -77,7 +77,7 @@ function renderMessageText(text, isDark, members) {
 }
 
 export default function MessageArea({
-  messages, username, typingUsers, onSendMessage, onTyping, onStopTyping, userRole, members, 
+  messages, username, typingUsers, onSendMessage, onTyping, onStopTyping, userRole, members,
   onKick, onPromote, onReaction, onSetColor, onPingTest, announcementOnly,
   onEditMessage, onDeleteMessage, onPinMessage, onHighlightMessage, pinnedMessageId
 }) {
@@ -85,13 +85,8 @@ export default function MessageArea({
   const [text, setText] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
   const [showActions, setShowActions] = useState(null);
-  
-  // Context Menu State
   const [contextMessageId, setContextMessageId] = useState(null);
-  
-  // Edit State
   const [editMessageId, setEditMessageId] = useState(null);
-
   const [atBottom, setAtBottom] = useState(true);
   const [deliveredIds, setDeliveredIds] = useState(new Set());
   const [sendingIds, setSendingIds] = useState(new Set());
@@ -213,30 +208,29 @@ export default function MessageArea({
 
   const canManage = userRole === 'owner' || userRole === 'admin';
   const allMessages = [...messages, ...localMessages].sort((a, b) => a.timestamp - b.timestamp);
-  
+
   const pinnedMessage = messages.find(m => m.id === pinnedMessageId);
 
   return (
     <div className="flex-1 flex flex-col min-h-0 relative">
       {/* Pinned Message Banner */}
       {pinnedMessage && (
-        <div className={`px-4 py-2 border-b flex items-center justify-between gap-3  z-10 
-          ${isDark ? 'bg-amber-500/10 border-amber-500/20' : 'bg-amber-50 border-amber-200'}`}>
-          <div className="flex items-center gap-2 overflow-hidden flex-1 cursor-pointer" 
+        <div className="px-4 py-2 border-b flex items-center justify-between gap-3 z-10
+          bg-[#A100FF]/8 border-[#A100FF]/15">
+          <div className="flex items-center gap-2 overflow-hidden flex-1 cursor-pointer"
                onClick={() => {
-                 // Try to scroll to message roughly
                  const el = document.getElementById(`msg-${pinnedMessage.id}`);
                  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                }}>
-            <Pin className={`w-3.5 h-3.5 flex-shrink-0 ${isDark ? 'text-amber-400' : 'text-amber-600'}`} />
+            <Pin className="w-3.5 h-3.5 flex-shrink-0 text-[#A100FF]" />
             <div className="truncate text-sm flex-1">
-              <span className="font-semibold mr-1">{pinnedMessage.sender}:</span>
-              <span className={isDark ? 'text-slate-300' : 'text-slate-700'}>{pinnedMessage.text}</span>
+              <span className="font-semibold mr-1 text-[#A100FF]">{pinnedMessage.sender}:</span>
+              <span className="text-[#BFA6D9]">{pinnedMessage.text}</span>
             </div>
           </div>
           {canManage && (
-            <button onClick={() => onPinMessage?.(pinnedMessage.id)} className={`p-1  opacity-70 hover:opacity-100 ${isDark ? 'hover:bg-white/10' : 'hover:bg-black/10'}`}>
-              <X className="w-4 h-4" />
+            <button onClick={() => onPinMessage?.(pinnedMessage.id)} className="p-1 rounded-lg opacity-70 hover:opacity-100 hover:bg-[#A100FF]/10 transition-all">
+              <X className="w-4 h-4 text-[#BFA6D9]" />
             </button>
           )}
         </div>
@@ -245,7 +239,7 @@ export default function MessageArea({
       {/* Messages */}
       <div ref={containerRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 py-3 space-y-1.5" onClick={() => setContextMessageId(null)}>
         {allMessages.length === 0 && (
-          <div className={`flex items-center justify-center h-full ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
+          <div className="flex items-center justify-center h-full text-[#7B5EA0]">
             <div className="text-center">
               <p className="text-lg mb-1">✨ No messages yet</p>
               <p className="text-sm">{announcementOnly ? 'Waiting for announcements...' : 'Be the first to say something!'}</p>
@@ -257,7 +251,7 @@ export default function MessageArea({
           if (msg.type === 'system') {
             return (
               <div key={msg.id} id={`msg-${msg.id}`} className="flex justify-center py-1 animate-fade-in">
-                <span className={`text-xs px-3 py-1  ${isDark ? 'bg-white/5 text-slate-500' : 'bg-black/5 text-slate-400'}`}>
+                <span className="text-xs px-3 py-1 rounded-full bg-[#A100FF]/8 text-[#7B5EA0] border border-[#A100FF]/10">
                   {msg.text}
                 </span>
               </div>
@@ -269,13 +263,13 @@ export default function MessageArea({
           const reactions = msg.reactions || {};
           const hasReactions = Object.keys(reactions).length > 0;
           const isDelivered = deliveredIds.has(msg.id);
-          const senderColor = msg.senderColor ? COLOR_MAP[msg.senderColor] : 'text-violet-400';
+          const senderColor = msg.senderColor ? COLOR_MAP[msg.senderColor] : 'text-[#A100FF]';
 
           return (
             <div key={msg.id} id={`msg-${msg.id}`} className={`flex items-end gap-2 animate-fade-in ${isMine ? 'justify-end' : 'justify-start'}`}>
               {!isMine && (
-                <div className={`w-7 h-7  flex-shrink-0 flex items-center justify-center text-xs font-bold
-                  ${showAvatar ? 'bg-violet-500/30 text-violet-300' : 'invisible'}`}>
+                <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold
+                  ${showAvatar ? 'bg-[#A100FF]/25 text-[#A100FF]' : 'invisible'}`}>
                   {msg.sender[0].toUpperCase()}
                 </div>
               )}
@@ -283,9 +277,9 @@ export default function MessageArea({
               <div className="relative max-w-[75%] lg:max-w-[55%] group">
                 <div
                   className={`px-3.5 py-2 transition-all cursor-pointer ${
-                    msg.isHighlighted 
-                      ? isDark ? 'bg-yellow-500/20 border-l-4 border-yellow-500  text-slate-200' : 'bg-yellow-100 border-l-4 border-yellow-500  text-slate-800'
-                      : isMine ? 'message-sent   text-white' : 'message-received  '
+                    msg.isHighlighted
+                      ? 'bg-[#FF00C8]/15 border-l-4 border-[#FF00C8] rounded-r-2xl text-[#F5E9FF]'
+                      : isMine ? 'message-sent' : 'message-received'
                   }`}
                   onDoubleClick={(e) => { e.stopPropagation(); setContextMessageId(contextMessageId === msg.id ? null : msg.id); }}
                   onContextMenu={e => { if (canManage && !isMine) { e.preventDefault(); setShowActions(msg.sender); } }}
@@ -294,24 +288,24 @@ export default function MessageArea({
                     <p className={`text-xs font-semibold mb-0.5 ${senderColor}`}>{msg.sender}</p>
                   )}
                   {msg.isHighlighted && !isMine && (
-                     <p className={`text-xs font-bold mb-0.5 text-yellow-600 dark:text-yellow-400 flex items-center gap-1`}>
+                     <p className="text-xs font-bold mb-0.5 text-[#FF00C8] flex items-center gap-1">
                        <Zap className="w-3 h-3" /> {msg.sender}
                      </p>
                   )}
-                  
-                  <div className={`text-sm leading-relaxed break-words ${!isMine && isDark && !msg.isHighlighted ? 'text-slate-200' : !isMine && !msg.isHighlighted ? 'text-slate-700' : ''}`}>
+
+                  <div className={`text-sm leading-relaxed break-words ${!isMine && !msg.isHighlighted ? 'text-[#F5E9FF]/90' : ''}`}>
                     {renderMessageText(msg.text, isDark, members)}
                   </div>
-                  
+
                   <div className="flex items-center justify-end gap-1 mt-0.5">
                     {msg.isEdited && (
-                      <p className={`text-[10px] leading-none ${isMine && !msg.isHighlighted ? 'text-white/70' : isDark ? 'text-slate-400' : 'text-slate-500'}`}>(edited)</p>
+                      <p className={`text-[10px] leading-none ${isMine && !msg.isHighlighted ? 'text-white/60' : 'text-[#7B5EA0]'}`}>(edited)</p>
                     )}
-                    <p className={`text-[10px] leading-none ${isMine && !msg.isHighlighted ? 'text-white/50' : isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <p className={`text-[10px] leading-none ${isMine && !msg.isHighlighted ? 'text-white/40' : 'text-[#7B5EA0]'}`}>
                       {formatTime(msg.timestamp)}
                     </p>
                     {isMine && (
-                      <Check className={`w-3 h-3 ${isDelivered ? 'text-emerald-400' : 'text-white/30'}`} />
+                      <Check className={`w-3 h-3 ${isDelivered ? 'text-emerald-400' : 'text-white/25'}`} />
                     )}
                   </div>
                 </div>
@@ -320,10 +314,12 @@ export default function MessageArea({
                   <div className={`flex flex-wrap gap-1 mt-0.5 ${isMine ? 'justify-end' : 'justify-start'}`}>
                     {Object.entries(reactions).map(([emoji, users]) => (
                       <button key={emoji} onClick={() => onReaction?.(msg.id, emoji)}
-                        className={`flex items-center gap-0.5 px-1.5 py-0.5  text-xs transition-all
-                          ${users.includes(username) ? 'bg-violet-500/30 border border-violet-500/40' : isDark ? 'bg-white/5 border border-white/5 hover:bg-white/10' : 'bg-black/5 border border-black/5 hover:bg-black/10'}`}>
+                        className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs transition-all
+                          ${users.includes(username)
+                            ? 'bg-[#A100FF]/25 border border-[#A100FF]/40 shadow-[0_0_6px_rgba(161,0,255,0.2)]'
+                            : 'bg-[#A100FF]/5 border border-[#A100FF]/10 hover:bg-[#A100FF]/15'}`}>
                         <span>{emoji}</span>
-                        <span className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{users.length}</span>
+                        <span className="text-[10px] text-[#BFA6D9]">{users.length}</span>
                       </button>
                     ))}
                   </div>
@@ -331,49 +327,49 @@ export default function MessageArea({
 
                 {/* Context Menu Popup */}
                 {contextMessageId === msg.id && (
-                  <div className={`absolute ${isMine ? 'right-0' : 'left-0'} bottom-full mb-1 min-w-[200px] flex flex-col   z-50 animate-fade-in overflow-hidden
-                    ${isDark ? 'bg-[#1a1a2e] border border-white/10' : 'bg-white border border-black/10'}`}>
-                    
+                  <div className={`absolute ${isMine ? 'right-0' : 'left-0'} bottom-full mb-1 min-w-[200px] flex flex-col z-50 animate-fade-in overflow-hidden
+                    bg-[#150D28]/95 backdrop-blur-xl border border-[#A100FF]/15 rounded-2xl shadow-[0_0_25px_rgba(161,0,255,0.15)]`}>
+
                     {/* Reactions Bar */}
-                    <div className={`flex gap-1 justify-between px-3 py-2 border-b ${isDark ? 'border-white/10' : 'border-black/5'}`}>
+                    <div className="flex gap-1 justify-between px-3 py-2 border-b border-[#A100FF]/10">
                       {REACTION_EMOJIS.map(emoji => (
                         <button key={emoji} onClick={() => { onReaction?.(msg.id, emoji); setContextMessageId(null); }}
                           className="text-lg hover:scale-125 transition-transform">{emoji}</button>
                       ))}
                     </div>
-                    
+
                     {/* Actions List */}
                     <div className="py-1">
                       {isMine && (
                         <>
-                          <button onClick={() => { setEditMessageId(msg.id); setText(msg.text); setContextMessageId(null); }} 
-                                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm ${isDark ? 'hover:bg-white/5 text-slate-300' : 'hover:bg-black/5 text-slate-700'}`}>
+                          <button onClick={() => { setEditMessageId(msg.id); setText(msg.text); setContextMessageId(null); }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#A100FF]/10 text-[#BFA6D9] transition-colors">
                             <Pencil className="w-4 h-4" /> Edit Message
                           </button>
-                          <button onClick={() => { onDeleteMessage?.(msg.id); setContextMessageId(null); }} 
-                                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-red-500 ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
+                          <button onClick={() => { onDeleteMessage?.(msg.id); setContextMessageId(null); }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors">
                             <Trash2 className="w-4 h-4" /> Unsend Message
                           </button>
                         </>
                       )}
-                      
+
                       {canManage && (
                         <>
-                          <button onClick={() => { onPinMessage?.(msg.id); setContextMessageId(null); }} 
-                                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-amber-500 ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
+                          <button onClick={() => { onPinMessage?.(msg.id); setContextMessageId(null); }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-amber-400 hover:bg-amber-500/10 transition-colors">
                             {pinnedMessageId === msg.id ? <PinOff className="w-4 h-4" /> : <Pin className="w-4 h-4" />}
                             {pinnedMessageId === msg.id ? 'Unpin Message' : 'Pin to Top'}
                           </button>
-                          <button onClick={() => { onHighlightMessage?.(msg.id); setContextMessageId(null); }} 
-                                  className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-yellow-500 ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>
+                          <button onClick={() => { onHighlightMessage?.(msg.id); setContextMessageId(null); }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-[#FF00C8] hover:bg-[#FF00C8]/10 transition-colors">
                             {msg.isHighlighted ? <ZapOff className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
                             {msg.isHighlighted ? 'Unhighlight' : 'Highlight Message'}
                           </button>
                         </>
                       )}
-                      
+
                       {!isMine && !canManage && (
-                         <div className={`px-3 py-2 text-xs text-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                         <div className="px-3 py-2 text-xs text-center text-[#7B5EA0]">
                            Double tap for emojis
                          </div>
                       )}
@@ -382,10 +378,11 @@ export default function MessageArea({
                 )}
 
                 {showActions === msg.sender && canManage && !isMine && (
-                  <div className={`absolute bottom-full mb-1 right-0   z-50 overflow-hidden animate-fade-in ${isDark ? 'glass' : 'glass-light'}`}>
-                    <button onClick={() => { onKick(msg.sender); setShowActions(null); }} className={`block w-full px-4 py-2 text-xs text-left text-red-400 ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>Kick {msg.sender}</button>
-                    <button onClick={() => { onPromote(msg.sender); setShowActions(null); }} className={`block w-full px-4 py-2 text-xs text-left text-cyan-400 ${isDark ? 'hover:bg-white/5' : 'hover:bg-black/5'}`}>Promote to Admin</button>
-                    <button onClick={() => setShowActions(null)} className={`block w-full px-4 py-2 text-xs text-left ${isDark ? 'text-slate-400 hover:bg-white/5' : 'text-slate-500 hover:bg-black/5'}`}>Cancel</button>
+                  <div className="absolute bottom-full mb-1 right-0 z-50 overflow-hidden animate-fade-in
+                    bg-[#150D28]/95 backdrop-blur-xl border border-[#A100FF]/15 rounded-2xl shadow-[0_0_20px_rgba(161,0,255,0.12)]">
+                    <button onClick={() => { onKick(msg.sender); setShowActions(null); }} className="block w-full px-4 py-2 text-xs text-left text-red-400 hover:bg-red-500/10 transition-colors">Kick {msg.sender}</button>
+                    <button onClick={() => { onPromote(msg.sender); setShowActions(null); }} className="block w-full px-4 py-2 text-xs text-left text-[#FF00C8] hover:bg-[#FF00C8]/10 transition-colors">Promote to Admin</button>
+                    <button onClick={() => setShowActions(null)} className="block w-full px-4 py-2 text-xs text-left text-[#BFA6D9] hover:bg-[#A100FF]/10 transition-colors">Cancel</button>
                   </div>
                 )}
               </div>
@@ -395,17 +392,17 @@ export default function MessageArea({
 
         {typingUsers.length > 0 && (
           <div className="flex items-end gap-2 animate-fade-in">
-            <div className="w-7 h-7  bg-violet-500/30 flex items-center justify-center text-xs font-bold text-violet-300">
+            <div className="w-7 h-7 rounded-full bg-[#A100FF]/25 flex items-center justify-center text-xs font-bold text-[#A100FF]">
               {typingUsers[0][0].toUpperCase()}
             </div>
-            <div className={`px-4 py-3   ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
+            <div className="px-4 py-3 rounded-2xl bg-[#A100FF]/5 border border-[#A100FF]/10">
               <div className="flex items-center gap-1.5">
                 <div className="flex gap-1">
-                  <span className={`w-1.5 h-1.5  typing-dot ${isDark ? 'bg-slate-400' : 'bg-slate-500'}`} />
-                  <span className={`w-1.5 h-1.5  typing-dot ${isDark ? 'bg-slate-400' : 'bg-slate-500'}`} />
-                  <span className={`w-1.5 h-1.5  typing-dot ${isDark ? 'bg-slate-400' : 'bg-slate-500'}`} />
+                  <span className="w-2 h-2 rounded-full typing-dot" />
+                  <span className="w-2 h-2 rounded-full typing-dot" />
+                  <span className="w-2 h-2 rounded-full typing-dot" />
                 </div>
-                <span className={`text-xs ml-1 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{typingUsers.join(', ')}</span>
+                <span className="text-xs ml-1 text-[#7B5EA0]">{typingUsers.join(', ')}</span>
               </div>
             </div>
           </div>
@@ -414,40 +411,40 @@ export default function MessageArea({
       </div>
 
       {!atBottom && (
-        <button onClick={scrollToBottom} className="absolute bottom-20 right-6 p-2   premium-btn text-white animate-fade-in z-10">
+        <button onClick={scrollToBottom} className="absolute bottom-20 right-6 p-2 rounded-xl premium-btn text-white animate-fade-in z-10 glow-pulse">
           <ArrowDown className="w-4 h-4" />
         </button>
       )}
 
       {showEmoji && (
         <div className="absolute bottom-16 left-0 right-0 sm:right-auto sm:left-4 z-20 animate-fade-in flex justify-center w-full sm:w-auto">
-          <EmojiPicker onEmojiClick={handleEmoji} theme={isDark ? 'dark' : 'light'} emojiStyle="native" lazyLoadEmojis={false} height={350} width={320} />
+          <EmojiPicker onEmojiClick={handleEmoji} theme="dark" emojiStyle="native" lazyLoadEmojis={false} height={350} width={320} />
         </div>
       )}
 
       {/* Input Area */}
       {editMessageId && (
-        <div className={`px-4 py-2 text-xs flex items-center justify-between  -mb-1
-          ${isDark ? 'bg-[#1a1a2e] text-slate-300 border-t border-white/5' : 'bg-white text-slate-600 border-t border-black/5'}`}>
+        <div className="px-4 py-2 text-xs flex items-center justify-between -mb-1
+          bg-[#A100FF]/8 text-[#BFA6D9] border-t border-[#A100FF]/10">
           <div className="flex items-center gap-2">
-            <Pencil className="w-3.5 h-3.5 text-violet-400" />
+            <Pencil className="w-3.5 h-3.5 text-[#A100FF]" />
             <span>Editing message...</span>
           </div>
-          <button onClick={handleCancelEdit} className={`font-semibold hover:text-red-400 transition-colors`}>Cancel</button>
+          <button onClick={handleCancelEdit} className="font-semibold hover:text-[#FF00C8] transition-colors">Cancel</button>
         </div>
       )}
-      <div className={`px-4 py-3 border-t ${isDark ? 'border-white/5' : 'border-black/5'} ${editMessageId && !isDark ? 'bg-slate-50' : ''}`}>
+      <div className={`px-4 py-3 border-t border-[#A100FF]/10 ${editMessageId ? 'bg-[#0B0616]/50' : ''}`}>
         {canSend ? (
-          <div className={`flex items-center gap-2  px-4 py-2.5 transition-all
-            ${isDark ? 'bg-white/5 border border-white/5 focus-within:border-violet-500/30' : 'bg-black/5 border border-black/5 focus-within:border-violet-500/30'}`}>
+          <div className="flex items-center gap-2 rounded-2xl px-4 py-2.5 transition-all
+            bg-[#A100FF]/5 border border-[#A100FF]/10 focus-within:border-[#A100FF]/30 focus-within:shadow-[0_0_15px_rgba(161,0,255,0.1)]">
             {!editMessageId && (
               <>
                 <button onClick={() => setShowEmoji(!showEmoji)}
-                  className={`p-1  transition-colors ${showEmoji ? 'text-violet-400' : isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'}`}>
+                  className={`p-1 rounded-lg transition-colors ${showEmoji ? 'text-[#A100FF]' : 'text-[#7B5EA0] hover:text-[#BFA6D9]'}`}>
                   <Smile className="w-5 h-5" />
                 </button>
                 <button onClick={handleSOS} title="Send SOS Location"
-                  className={`p-1  transition-colors ${isDark ? 'text-red-400/60 hover:text-red-400' : 'text-red-500/60 hover:text-red-500'}`}>
+                  className="p-1 rounded-lg transition-colors text-red-400/60 hover:text-red-400">
                   <MapPin className="w-5 h-5" />
                 </button>
               </>
@@ -456,15 +453,15 @@ export default function MessageArea({
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
               onClick={() => { setShowEmoji(false); setContextMessageId(null); }}
               placeholder={editMessageId ? "Edit your message..." : "/ping · /color red · @mention · **bold**"}
-              className={`flex-1 bg-transparent outline-none text-sm ${isDark ? 'text-white placeholder-slate-500' : 'text-slate-900 placeholder-slate-400'}`} 
+              className="flex-1 bg-transparent outline-none text-sm text-[#F5E9FF] placeholder-[#7B5EA0]"
               autoFocus={!!editMessageId} />
             <button id="send-btn" onClick={handleSend} disabled={!text.trim()}
-              className={`p-2  transition-all ${text.trim() ? 'premium-btn text-white ' : isDark ? 'text-slate-600' : 'text-slate-300'}`}>
+              className={`p-2 rounded-xl transition-all ${text.trim() ? 'premium-btn text-white glow-pulse' : 'text-[#7B5EA0]'}`}>
               <Send className="w-4 h-4" />
             </button>
           </div>
         ) : (
-          <div className={`text-center py-3  ${isDark ? 'bg-white/5 text-slate-500' : 'bg-black/5 text-slate-400'}`}>
+          <div className="text-center py-3 rounded-2xl bg-[#A100FF]/5 border border-[#A100FF]/10 text-[#7B5EA0]">
             <p className="text-sm font-medium">📢 Announcement Room</p>
             <p className="text-xs">Only admins can send messages</p>
           </div>

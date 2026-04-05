@@ -4,6 +4,7 @@ import TopBar from './TopBar';
 import MessageArea from './MessageArea';
 import RightPanel from './RightPanel';
 import { useTheme } from '../context/ThemeContext';
+import { Menu } from 'lucide-react';
 
 export default function Chat({
   username, rooms, activeRoom, messagesByRoom, membersByRoom, typingUsers,
@@ -35,7 +36,7 @@ export default function Chat({
   const currentTyping = typingUsers[activeRoom] || [];
 
   return (
-    <div className={`flex h-screen ${isDark ? 'bg-app-dark' : 'bg-app-light'}`}>
+    <div className={`flex h-[100dvh] ${isDark ? 'bg-app-dark' : 'bg-app-light'}`}>
       <Sidebar
         rooms={rooms}
         activeRoom={activeRoom}
@@ -48,16 +49,16 @@ export default function Chat({
         onClose={() => onToggleSidebar(false)}
       />
 
-      <main 
+      <main
         className="flex-1 flex flex-col min-w-0 bg-cover bg-center transition-all bg-no-repeat relative"
       >
         {currentRoom?.backgroundUrl && (
           <>
-            <div className="absolute inset-0 bg-cover bg-center pointer-events-none z-0 opacity-20" style={{ backgroundImage: `url(${currentRoom.backgroundUrl})` }} />
-            <div className="absolute inset-0 bg-black/40 pointer-events-none z-0" />
+            <div className="absolute inset-0 bg-cover bg-center pointer-events-none z-0 opacity-15" style={{ backgroundImage: `url(${currentRoom.backgroundUrl})` }} />
+            <div className="absolute inset-0 bg-[#0B0616]/50 pointer-events-none z-0" />
           </>
         )}
-        
+
         {currentRoom ? (
            <div className="flex-1 flex z-10 min-h-0">
             <div className="flex-1 flex flex-col min-w-0">
@@ -113,11 +114,22 @@ export default function Chat({
             />
           </div>
         ) : (
-          <div className={`flex-1 flex items-center justify-center z-10 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>
-            <div className="text-center">
-              <p className="text-5xl mb-4">💬</p>
-              <p className="text-lg font-medium">Select a room to start chatting</p>
-              <p className="text-sm mt-1">Or create / join a new one from the sidebar</p>
+          <div className="flex-1 flex flex-col z-10 min-h-0">
+            <div className="lg:hidden p-3 flex flex-shrink-0 items-center border-b bg-[#0B0616]/80 backdrop-blur-xl border-[#A100FF]/10">
+              <button
+                onClick={() => onToggleSidebar(true)}
+                className="p-2 rounded-xl hover:bg-[#A100FF]/10 text-[#F5E9FF] transition-colors"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <span className="ml-2 font-semibold premium-text">Giyu Chat</span>
+            </div>
+            <div className="flex-1 flex items-center justify-center text-[#7B5EA0]">
+              <div className="text-center p-4">
+                <p className="text-5xl mb-4">💬</p>
+                <p className="text-lg font-medium text-[#BFA6D9]">Select a room to start chatting</p>
+                <p className="text-sm mt-1 text-[#7B5EA0]">Or create / join a new one from the sidebar</p>
+              </div>
             </div>
           </div>
         )}
